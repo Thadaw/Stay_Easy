@@ -6,7 +6,7 @@ interface AuthContextValue {
   user: User | null
   token: string | null
   loading: boolean
-  login: (token: string) => Promise<void>
+  login: (token: string, refreshToken?: string) => Promise<void>
   credentialLogin: (email: string, password: string) => Promise<boolean>
   signup: (fullName: string, email: string, password: string) => Promise<boolean>
   logout: () => void
@@ -50,8 +50,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [token])
 
-  const login = async (newToken: string) => {
+  const login = async (newToken: string, refreshToken?: string) => {
     localStorage.setItem('token', newToken)
+    if (refreshToken) {
+      localStorage.setItem('refreshToken', refreshToken)
+    }
     setToken(newToken)
     await fetchUser()
   }

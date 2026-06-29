@@ -241,6 +241,8 @@ export default function BuildingScene({
     function updatePupils() {
       const state = getEyeState()
       if (state === 'cover') return
+      const canvas = canvasRef.current
+      if (!canvas) return
       const rect = canvas.getBoundingClientRect()
       const panelRect = panelRef.current?.getBoundingClientRect()
       if (!panelRect) return

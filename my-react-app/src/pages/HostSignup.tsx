@@ -91,13 +91,13 @@ export default function HostSignup() {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            padding: '36px 32px',
+            padding: '22px 32px',
             order: 1,
             flexShrink: 0,
           }}
         >
           {/* Tabs */}
-          <div style={{ display: 'flex', marginBottom: 8 }}>
+          <div style={{ display: 'flex', marginBottom: 4 }}>
             <div
               onClick={() => navigate('/host/login')}
               style={{
@@ -131,15 +131,15 @@ export default function HostSignup() {
 
           {!showOtpStep ? (
             <>
-              <div style={{ fontSize: 20, fontWeight: 700, color: '#111', marginBottom: 3 }}>
+              <div style={{ fontSize: 20, fontWeight: 700, color: '#111', marginBottom: 2 }}>
                 Become a Host
               </div>
-              <div style={{ fontSize: 12, color: '#999', marginBottom: 20 }}>
+              <div style={{ fontSize: 12, color: '#999', marginBottom: 12 }}>
                 Start listing your property today
               </div>
 
               {/* Full name */}
-              <div style={{ marginBottom: 13 }}>
+              <div style={{ marginBottom: 7 }}>
                 <label
                   style={{
                     fontSize: 11, color: '#666', marginBottom: 3, display: 'block',
@@ -163,7 +163,7 @@ export default function HostSignup() {
               </div>
 
               {/* Phone */}
-              <div style={{ position: 'relative', marginBottom: 13 }}>
+              <div style={{ position: 'relative', marginBottom: 7 }}>
                 <label
                   style={{
                     fontSize: 11, color: '#666', marginBottom: 3, display: 'block',
@@ -187,7 +187,7 @@ export default function HostSignup() {
               </div>
 
               {/* Email */}
-              <div style={{ position: 'relative', marginBottom: 13 }}>
+              <div style={{ position: 'relative', marginBottom: 7 }}>
                 <label
                   style={{
                     fontSize: 11, color: '#666', marginBottom: 3, display: 'block',
@@ -211,7 +211,7 @@ export default function HostSignup() {
               </div>
 
               {/* Password */}
-              <div style={{ position: 'relative', marginBottom: 13 }}>
+              <div style={{ position: 'relative', marginBottom: 7 }}>
                 <label
                   style={{
                     fontSize: 11, color: '#666', marginBottom: 3, display: 'block',
@@ -245,12 +245,12 @@ export default function HostSignup() {
                   👁
                 </button>
               </div>
-              <div style={{ fontSize: 11, color: '#bbb', marginTop: -8, marginBottom: 13 }}>
+              <div style={{ fontSize: 11, color: '#bbb', marginTop: 0, marginBottom: 6 }}>
                 Must be 8+ characters with a number and a special character.
               </div>
 
               {error && (
-                <p style={{ color: '#e94560', fontSize: 12, marginBottom: 10 }}>{error}</p>
+                <p style={{ color: '#e94560', fontSize: 12, marginBottom: 6 }}>{error}</p>
               )}
 
               <button
@@ -259,13 +259,13 @@ export default function HostSignup() {
                 style={{
                   width: '100%', padding: 11, background: '#111', border: 'none', borderRadius: 8,
                   color: '#fff', fontSize: 14, fontWeight: 600, cursor: loading ? 'default' : 'pointer',
-                  marginTop: 2, opacity: loading ? 0.7 : 1,
+                  marginTop: 0, opacity: loading ? 0.7 : 1,
                 }}
               >
                 {loading ? 'Creating account...' : 'Create Account'}
               </button>
 
-              <div style={{ textAlign: 'center', marginTop: 11, fontSize: 12, color: '#aaa' }}>
+              <div style={{ textAlign: 'center', marginTop: 6, fontSize: 12, color: '#aaa' }}>
                 Already have an account?{' '}
                 <span
                   onClick={() => navigate('/host/login')}

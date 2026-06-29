@@ -39,20 +39,21 @@ export default function HotelDetailPage() {
     );
   }
 
+  const currentHotel = hotel;
   const nights = checkIn && checkOut
     ? Math.max(1, Math.round((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000))
     : 5;
-  const subtotal = hotel.price * nights;
-  const cleaningFee = Math.round(hotel.price * 0.15);
+  const subtotal = currentHotel.price * nights;
+  const cleaningFee = Math.round(currentHotel.price * 0.15);
   const serviceFee = Math.round(subtotal * 0.12);
   const total = subtotal + cleaningFee + serviceFee;
 
-  const related = hotels.filter((h) => h.id !== hotel.id && h.category === hotel.category).slice(0, 4);
+  const related = hotels.filter((h) => h.id !== currentHotel.id && h.category === currentHotel.category).slice(0, 4);
 
-  function prevImg() { setCurrentImg((v) => (v === 0 ? hotel.images.length - 1 : v - 1)); }
-  function nextImg() { setCurrentImg((v) => (v === hotel.images.length - 1 ? 0 : v + 1)); }
+  function prevImg() { setCurrentImg((v) => (v === 0 ? currentHotel.images.length - 1 : v - 1)); }
+  function nextImg() { setCurrentImg((v) => (v === currentHotel.images.length - 1 ? 0 : v + 1)); }
 
-  const visibleAmenities = showAllAmenities ? hotel.amenities : hotel.amenities.slice(0, 8);
+  const visibleAmenities = showAllAmenities ? currentHotel.amenities : currentHotel.amenities.slice(0, 8);
 
   return (
     <div className="min-h-screen bg-background" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
@@ -66,13 +67,13 @@ export default function HotelDetailPage() {
         <div className="flex items-start justify-between mb-4 gap-4">
           <div>
             <h1 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: "clamp(1.5rem, 3vw, 2rem)", color: "var(--foreground)", lineHeight: 1.2 }}>
-              {hotel.name}
+              {currentHotel.name}
             </h1>
             <div className="flex flex-wrap items-center gap-3 mt-2 text-sm">
               <span className="flex items-center gap-1">
                 <Star size={13} className="fill-foreground stroke-foreground" />
-                <span className="font-semibold">{hotel.rating}</span>
-                <span className="text-muted-foreground">({hotel.reviews} reviews)</span>
+                <span className="font-semibold">{currentHotel.rating}</span>
+                <span className="text-muted-foreground">({currentHotel.reviews} reviews)</span>
               </span>
               {hotel.isSuperhost && (
                 <span className="flex items-center gap-1 text-muted-foreground">
@@ -80,7 +81,7 @@ export default function HotelDetailPage() {
                   Superhost
                 </span>
               )}
-              <span className="text-muted-foreground underline cursor-pointer">{hotel.location}</span>
+              <span className="text-muted-foreground underline cursor-pointer">{currentHotel.location}</span>
             </div>
           </div>
           <div className="flex items-center gap-3 shrink-0">
@@ -99,19 +100,19 @@ export default function HotelDetailPage() {
               <ChevronLeft size={15} /> Back
             </button>
             <div className="columns-2 md:columns-3 gap-3 space-y-3">
-              {hotel.images.map((img, i) => (
-                <img key={i} src={img} alt={`${hotel.name} photo ${i + 1}`} className="w-full rounded-xl object-cover" />
+              {currentHotel.images.map((img, i) => (
+                <img key={i} src={img} alt={`${currentHotel.name} photo ${i + 1}`} className="w-full rounded-xl object-cover" />
               ))}
             </div>
           </div>
         ) : (
           <div className="relative mb-8 rounded-2xl overflow-hidden bg-muted">
             <div className="md:hidden relative aspect-[4/3]">
-              <img src={hotel.images[currentImg]} alt={hotel.name} className="w-full h-full object-cover" />
+              <img src={currentHotel.images[currentImg]} alt={currentHotel.name} className="w-full h-full object-cover" />
               <button onClick={prevImg} className="absolute left-3 top-1/2 -translate-y-1/2 bg-white rounded-full p-2 shadow-md hover:shadow-lg"><ChevronLeft size={16} /></button>
               <button onClick={nextImg} className="absolute right-3 top-1/2 -translate-y-1/2 bg-white rounded-full p-2 shadow-md hover:shadow-lg"><ChevronRight size={16} /></button>
               <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
-                {hotel.images.map((_, i) => (
+                {currentHotel.images.map((_, i) => (
                   <div key={i} className="w-1.5 h-1.5 rounded-full bg-white transition-opacity" style={{ opacity: i === currentImg ? 1 : 0.4 }} />
                 ))}
               </div>
@@ -119,11 +120,11 @@ export default function HotelDetailPage() {
 
             <div className="hidden md:grid grid-cols-4 grid-rows-2 gap-2 h-[500px]">
               <div className="col-span-2 row-span-2">
-                <img src={hotel.images[0]} alt={hotel.name} className="w-full h-full object-cover" />
+                <img src={currentHotel.images[0]} alt={currentHotel.name} className="w-full h-full object-cover" />
               </div>
-              {hotel.images.slice(1, 5).map((img, i) => (
+              {currentHotel.images.slice(1, 5).map((img, i) => (
                 <div key={i} className="overflow-hidden">
-                  <img src={img} alt={`${hotel.name} ${i + 2}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300 cursor-pointer" />
+                  <img src={img} alt={`${currentHotel.name} ${i + 2}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300 cursor-pointer" />
                 </div>
               ))}
             </div>

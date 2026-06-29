@@ -1,36 +1,96 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import axios from 'axios'
 import BuildingScene from '../components/BuildingScene'
 import api from '../api'
+import toast from 'react-hot-toast'
 
 export default function Signup() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const isHost = searchParams.get('host') === 'true'
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName] = useState('')
+
+  const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
   const [pwFocused, setPwFocused] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  const [showOtpStep, setShowOtpStep] = useState(false)
+  const [otp, setOtp] = useState('')
+  const [otpLoading, setOtpLoading] = useState(false)
+  const [verified, setVerified] = useState(false)
+  const [resendLoading, setResendLoading] = useState(false)
+  const [resendTimer, setResendTimer] = useState(0)
+
+  useEffect(() => {
+    if (resendTimer <= 0) return
+    const id = setInterval(() => {
+      setResendTimer(t => t - 1)
+    }, 1000)
+    return () => clearInterval(id)
+  }, [resendTimer])
+
   const handleSignup = async () => {
     setError('')
     setLoading(true)
     try {
-      await api.post('/api/v1/auth/users/register', {
-        first_name: firstName,
-        last_name: lastName,
+      await api.post('/auth/users/register', {
+        full_name: fullName,
         email,
+        phone,
         password,
       })
-      navigate(isHost ? '/host/portal' : '/login')
-    } catch {
-      setError('Could not create account. Please check your details and try again.')
+      
+      toast.success('Verification code sent to your email')
+      setShowOtpStep(true)
+    } catch (err) {
+      const isAxiosError = axios.isAxiosError(err)
+      const status = isAxiosError ? err.response?.status : undefined
+      const detail = isAxiosError
+        ? err.response?.data?.detail || err.response?.data?.message || ''
+        : ''
+      if (
+        status === 409 ||
+        /already.*(?:exist|registered|taken|used)|(?:exist|registered|taken|used).*already/i.test(detail)
+      ) {
+        setError('This email is already registered. Please log in instead.')
+      } else {
+        setError('Could not create account. Please check your details and try again.')
+      }
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleVerifyOtp = async () => {
+    setError('')
+    setOtpLoading(true)
+    try {
+      await api.post('/auth/users/verify-otp', { email, otp })
+      setVerified(true)
+      toast.success('Account verified successfully!')
+    } catch {
+      setError('Invalid verification code. Please try again.')
+    } finally {
+      setOtpLoading(false)
+    }
+  }
+
+  const handleResendOtp = async () => {
+    setError('')
+    setResendLoading(true)
+    try {
+      await api.post('/auth/users/resend-otp', { email })
+      toast.success('Verification code resent to your email')
+      setResendTimer(30)
+    } catch {
+      toast.error('Failed to resend code. Please try again.')
+    } finally {
+      setResendLoading(false)
     }
   }
 
@@ -65,13 +125,13 @@ export default function Signup() {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            padding: '36px 32px',
+            padding: '22px 32px',
             order: 1,
             flexShrink: 0,
           }}
         >
           {/* Tabs */}
-          <div style={{ display: 'flex', marginBottom: 8 }}>
+          <div style={{ display: 'flex', marginBottom: 4 }}>
             <div
               onClick={() => navigate(isHost ? '/login?host=true' : '/login')}
               style={{
@@ -103,149 +163,242 @@ export default function Signup() {
             </div>
           </div>
 
-          <div style={{ fontSize: 20, fontWeight: 700, color: '#111', marginBottom: 3 }}>
-            {isHost ? 'Become a Host' : 'Create account'}
-          </div>
-          <div style={{ fontSize: 12, color: '#999', marginBottom: 20 }}>
-            {isHost ? 'Start listing your property today' : 'Start finding your stay today'}
-          </div>
+          {!showOtpStep ? (
+            <>
+              <div style={{ fontSize: 20, fontWeight: 700, color: '#111', marginBottom: 2 }}>
+                {isHost ? 'Become a Host' : 'Create account'}
+              </div>
+              <div style={{ fontSize: 12, color: '#999', marginBottom: 12 }}>
 
-          {/* First + last name */}
-          <div style={{ display: 'flex', gap: 10, marginBottom: 13 }}>
-            <div style={{ flex: 1 }}>
-              <label
+                {isHost ? 'Start listing your property today' : 'Start finding your stay today'}
+              </div>
+
+              {/* Full name */}
+              <div style={{ marginBottom: 7 }}>
+                <label
+                  style={{
+                    fontSize: 11, color: '#666', marginBottom: 3, display: 'block',
+                    textTransform: 'uppercase', letterSpacing: '0.4px',
+                  }}
+                >
+                  Full name
+                </label>
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={e => setFullName(e.target.value)}
+                  onFocus={() => setPwFocused(false)}
+                  placeholder="Enter your name"
+                  autoComplete="off"
+                  style={{
+                    width: '100%', border: 'none', borderBottom: '1.5px solid #ddd',
+                    padding: '7px 4px 7px 0', fontSize: 14, color: '#111', outline: 'none', background: 'transparent',
+                  }}
+                />
+              </div>
+
+              {/* Phone */}
+              <div style={{ position: 'relative', marginBottom: 7 }}>
+                <label
+                  style={{
+                    fontSize: 11, color: '#666', marginBottom: 3, display: 'block',
+                    textTransform: 'uppercase', letterSpacing: '0.4px',
+                  }}
+                >
+                  Phone
+                </label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={e => setPhone(e.target.value)}
+                  onFocus={() => setPwFocused(false)}
+                  placeholder="+977-98XXXXXXXX"
+                  autoComplete="off"
+                  style={{
+                    width: '100%', border: 'none', borderBottom: '1.5px solid #ddd',
+                    padding: '7px 26px 7px 0', fontSize: 14, color: '#111', outline: 'none', background: 'transparent',
+                  }}
+                />
+              </div>
+
+              {/* Email */}
+              <div style={{ position: 'relative', marginBottom: 7 }}>
+                <label
+                  style={{
+                    fontSize: 11, color: '#666', marginBottom: 3, display: 'block',
+                    textTransform: 'uppercase', letterSpacing: '0.4px',
+                  }}
+                >
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  onFocus={() => setPwFocused(false)}
+                  placeholder="Enter your email"
+                  autoComplete="off"
+                  style={{
+                    width: '100%', border: 'none', borderBottom: '1.5px solid #ddd',
+                    padding: '7px 26px 7px 0', fontSize: 14, color: '#111', outline: 'none', background: 'transparent',
+                  }}
+                />
+              </div>
+
+              {/* Password */}
+              <div style={{ position: 'relative', marginBottom: 7 }}>
+                <label
+                  style={{
+                    fontSize: 11, color: '#666', marginBottom: 3, display: 'block',
+                    textTransform: 'uppercase', letterSpacing: '0.4px',
+                  }}
+                >
+                  Password
+                </label>
+                <input
+                  type={showPw ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  onFocus={() => setPwFocused(true)}
+                  onBlur={() => setPwFocused(false)}
+                  placeholder="••••••••"
+                  autoComplete="off"
+                  style={{
+                    width: '100%', border: 'none', borderBottom: '1.5px solid #ddd',
+                    padding: '7px 26px 7px 0', fontSize: 14, color: '#111', outline: 'none', background: 'transparent',
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPw(p => !p)}
+                  aria-label="Toggle password visibility"
+                  style={{
+                    position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: 15, padding: 0,
+                  }}
+                >
+                  👁
+                </button>
+              </div>
+              <div style={{ fontSize: 11, color: '#bbb', marginTop: 0, marginBottom: 6 }}>
+                Must be 8+ characters with a number and a special character.
+              </div>
+
+              {error && (
+                <p style={{ color: '#e94560', fontSize: 12, marginBottom: 6 }}>{error}</p>
+              )}
+
+              <button
+                onClick={handleSignup}
+                disabled={loading}
                 style={{
-                  fontSize: 11, color: '#666', marginBottom: 3, display: 'block',
-                  textTransform: 'uppercase', letterSpacing: '0.4px',
+                  width: '100%', padding: 11, background: '#111', border: 'none', borderRadius: 8,
+                  color: '#fff', fontSize: 14, fontWeight: 600, cursor: loading ? 'default' : 'pointer',
+                  marginTop: 0, opacity: loading ? 0.7 : 1,
                 }}
               >
-                First name
-              </label>
-              <input
-                type="text"
-                value={firstName}
-                onChange={e => setFirstName(e.target.value)}
-                onFocus={() => setPwFocused(false)}
-                placeholder="Samip"
-                autoComplete="off"
-                style={{
-                  width: '100%', border: 'none', borderBottom: '1.5px solid #ddd',
-                  padding: '7px 4px 7px 0', fontSize: 14, color: '#111', outline: 'none', background: 'transparent',
-                }}
-              />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label
-                style={{
-                  fontSize: 11, color: '#666', marginBottom: 3, display: 'block',
-                  textTransform: 'uppercase', letterSpacing: '0.4px',
-                }}
-              >
-                Last name
-              </label>
-              <input
-                type="text"
-                value={lastName}
-                onChange={e => setLastName(e.target.value)}
-                onFocus={() => setPwFocused(false)}
-                placeholder="Khatri"
-                autoComplete="off"
-                style={{
-                  width: '100%', border: 'none', borderBottom: '1.5px solid #ddd',
-                  padding: '7px 4px 7px 0', fontSize: 14, color: '#111', outline: 'none', background: 'transparent',
-                }}
-              />
-            </div>
-          </div>
+                {loading ? 'Creating account...' : 'Create Account'}
+              </button>
 
-          {/* Email */}
-          <div style={{ position: 'relative', marginBottom: 13 }}>
-            <label
-              style={{
-                fontSize: 11, color: '#666', marginBottom: 3, display: 'block',
-                textTransform: 'uppercase', letterSpacing: '0.4px',
-              }}
-            >
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              onFocus={() => setPwFocused(false)}
-              placeholder="you@example.com"
-              autoComplete="off"
-              style={{
-                width: '100%', border: 'none', borderBottom: '1.5px solid #ddd',
-                padding: '7px 26px 7px 0', fontSize: 14, color: '#111', outline: 'none', background: 'transparent',
-              }}
-            />
-          </div>
+              <div style={{ textAlign: 'center', marginTop: 6, fontSize: 12, color: '#aaa' }}>
+                Already have an account?{' '}
+                <span
+                  onClick={() => navigate(isHost ? '/login?host=true' : '/login')}
+                  style={{ color: '#111', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  Log in
+                </span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ fontSize: 20, fontWeight: 700, color: '#111', marginBottom: 3 }}>
+                Verify your email
+              </div>
+              <div style={{ fontSize: 12, color: '#999', marginBottom: 20 }}>
+                A verification code was sent to <strong>{email}</strong>
+              </div>
 
-          {/* Password */}
-          <div style={{ position: 'relative', marginBottom: 13 }}>
-            <label
-              style={{
-                fontSize: 11, color: '#666', marginBottom: 3, display: 'block',
-                textTransform: 'uppercase', letterSpacing: '0.4px',
-              }}
-            >
-              Password
-            </label>
-            <input
-              type={showPw ? 'text' : 'password'}
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              onFocus={() => setPwFocused(true)}
-              onBlur={() => setPwFocused(false)}
-              placeholder="••••••••"
-              autoComplete="off"
-              style={{
-                width: '100%', border: 'none', borderBottom: '1.5px solid #ddd',
-                padding: '7px 26px 7px 0', fontSize: 14, color: '#111', outline: 'none', background: 'transparent',
-              }}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPw(p => !p)}
-              aria-label="Toggle password visibility"
-              style={{
-                position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)',
-                background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: 15, padding: 0,
-              }}
-            >
-              👁
-            </button>
-          </div>
-          <div style={{ fontSize: 11, color: '#bbb', marginTop: -8, marginBottom: 13 }}>
-            Must be 8+ characters with a number and a special character.
-          </div>
+              {!verified ? (
+                <>
+                  {/* OTP input */}
+                  <div style={{ position: 'relative', marginBottom: 20 }}>
+                    <label
+                      style={{
+                        fontSize: 11, color: '#666', marginBottom: 3, display: 'block',
+                        textTransform: 'uppercase', letterSpacing: '0.4px',
+                      }}
+                    >
+                      Verification code
+                    </label>
+                    <input
+                      type="text"
+                      value={otp}
+                      onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      placeholder="Enter 6-digit code"
+                      autoComplete="off"
+                      style={{
+                        width: '100%', border: 'none', borderBottom: '1.5px solid #ddd',
+                        padding: '7px 26px 7px 0', fontSize: 14, color: '#111', outline: 'none', background: 'transparent',
+                        letterSpacing: 8,
+                        fontWeight: 600,
+                      }}
+                    />
+                  </div>
 
-          {error && (
-            <p style={{ color: '#e94560', fontSize: 12, marginBottom: 10 }}>{error}</p>
+                  {error && (
+                    <p style={{ color: '#e94560', fontSize: 12, marginBottom: 10 }}>{error}</p>
+                  )}
+
+                  <button
+                    onClick={handleVerifyOtp}
+                    disabled={otpLoading || otp.length < 4}
+                    style={{
+                      width: '100%', padding: 11, background: '#111', border: 'none', borderRadius: 8,
+                      color: '#fff', fontSize: 14, fontWeight: 600, cursor: otpLoading ? 'default' : 'pointer',
+                      marginTop: 2, opacity: otpLoading || otp.length < 4 ? 0.7 : 1,
+                    }}
+                  >
+                    {otpLoading ? 'Verifying...' : 'Verify OTP'}
+                  </button>
+
+              <div style={{ textAlign: 'center', marginTop: 6, fontSize: 12, color: '#aaa' }}>
+                    Didn't receive the code?{' '}
+                    <span
+                      onClick={handleResendOtp}
+                      style={{
+                        color: resendTimer > 0 || resendLoading ? '#ccc' : '#111',
+                        fontWeight: 600,
+                        cursor: resendTimer > 0 || resendLoading ? 'default' : 'pointer',
+                      }}
+                    >
+                      {resendLoading ? 'Sending...' : resendTimer > 0 ? `Resend in ${resendTimer}s` : 'Resend'}
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ textAlign: 'center', marginBottom: 20 }}>
+                    <div style={{ fontSize: 40, marginBottom: 10 }}>✓</div>
+                    <p style={{ fontSize: 13, color: '#1E8449', fontWeight: 600 }}>
+                      Email verified successfully!
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => navigate(isHost ? '/login?host=true' : '/login')}
+                    style={{
+                      width: '100%', padding: 11, background: '#111', border: 'none', borderRadius: 8,
+                      color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                      marginTop: 2,
+                    }}
+                  >
+                    Next
+                  </button>
+                </>
+              )}
+            </>
           )}
-
-          <button
-            onClick={handleSignup}
-            disabled={loading}
-            style={{
-              width: '100%', padding: 11, background: '#111', border: 'none', borderRadius: 8,
-              color: '#fff', fontSize: 14, fontWeight: 600, cursor: loading ? 'default' : 'pointer',
-              marginTop: 2, opacity: loading ? 0.7 : 1,
-            }}
-          >
-            {loading ? 'Creating account...' : 'Create Account'}
-          </button>
-
-          <div style={{ textAlign: 'center', marginTop: 11, fontSize: 12, color: '#aaa' }}>
-            Already have an account?{' '}
-            <span
-              onClick={() => navigate(isHost ? '/login?host=true' : '/login')}
-              style={{ color: '#111', fontWeight: 600, cursor: 'pointer' }}
-            >
-              Log in
-            </span>
-          </div>
         </div>
 
         {/* Animated scene panel — on the RIGHT for sign up */}
