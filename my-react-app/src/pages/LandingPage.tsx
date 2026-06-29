@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+
 import { ChevronRight, Star, Shield, Globe } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Navbar } from "../components/Navbar";
@@ -54,6 +55,23 @@ export default function LandingPage() {
       <CategoryFilter selected={activeCategory} onChange={setActiveCategory} />
 
       <main className="max-w-[1280px] mx-auto px-6 py-10">
+        {/* Section heading (only when not searching) */}
+        {!isSearchActive && (
+          <div className="flex items-center justify-between mb-7">
+            <div>
+              <h2 style={{ fontFamily: "'Sora',sans-serif", fontWeight: 700, fontSize: "clamp(1.25rem, 3vw, 1.625rem)", color: "var(--brand-dark)" }}>
+                Featured stays
+              </h2>
+              <p className="text-sm mt-1" style={{ color: "var(--muted-foreground)" }}>
+                Hand-picked hotels and unique stays for your next adventure
+              </p>
+            </div>
+            <button className="hidden sm:flex items-center gap-1 text-sm font-semibold hover:underline" style={{ color: "var(--primary)" }}>
+              View all <ChevronRight size={15} />
+            </button>
+          </div>
+        )}
+
         {/* Search results header */}
         {isSearchActive && (
           <div className="mb-6 flex items-center justify-between">
@@ -78,7 +96,7 @@ export default function LandingPage() {
         )}
 
         {filtered.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-5 gap-y-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-10">
             {filtered.map(hotel => <HotelCard key={hotel.id} {...hotel} />)}
           </div>
         ) : (

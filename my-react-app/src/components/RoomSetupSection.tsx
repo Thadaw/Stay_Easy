@@ -1,5 +1,5 @@
-import React from "react";
 import { Trash2, Plus, PawPrint } from "lucide-react";
+
 
 interface Room {
   id: string;

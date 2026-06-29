@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router";
-import { useAuth } from "../context/AuthContext";
 import { Logo } from "../components/Logo";
+
+import { useAuth } from "../context/AuthContext";
 import {
   Eye,
   EyeOff,

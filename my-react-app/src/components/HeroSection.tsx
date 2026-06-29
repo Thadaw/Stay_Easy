@@ -31,42 +31,44 @@ export function HeroSection() {
   }, []);
 
   return (
-    <section className="relative min-h-[540px] flex items-center justify-center overflow-hidden">
-      {/* Background Image */}
-      <div
-        className="absolute inset-0"
-        style={{
-          backgroundImage: `linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.70)), url(${backgrounds[current]})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          transform: "scale(1.05)",
-          transition: "transform 10s ease-out",
-        }}
-      />
+    <section className="relative min-h-[340px] md:min-h-[420px] flex items-center justify-center">
+      <div className="absolute inset-0 overflow-hidden">
+        {/* Background Image */}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.70)), url(${backgrounds[current]})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            transform: "scale(1.05)",
+            transition: "transform 10s ease-out",
+          }}
+        />
 
-      {/* Black Fade Transition */}
-      <div
-        className="absolute inset-0 bg-black pointer-events-none"
-        style={{
-          opacity: blackFade ? 1 : 0,
-          transition: "opacity 1000ms ease-in-out",
-          zIndex: 2,
-        }}
-      />
+        {/* Black Fade Transition */}
+        <div
+          className="absolute inset-0 bg-black pointer-events-none"
+          style={{
+            opacity: blackFade ? 1 : 0,
+            transition: "opacity 1000ms ease-in-out",
+            zIndex: 2,
+          }}
+        />
 
-      {/* Pattern Overlay */}
-      <div
-        className="absolute inset-0 opacity-10"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.15) 1px, transparent 0)",
-          backgroundSize: "32px 32px",
-          zIndex: 3,
-        }}
-      />
+        {/* Pattern Overlay */}
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.15) 1px, transparent 0)",
+            backgroundSize: "32px 32px",
+            zIndex: 3,
+          }}
+        />
+      </div>
 
       {/* Hero Content */}
-      <div className="relative z-10 w-full max-w-[1280px] mx-auto px-6 flex flex-col items-center text-center gap-8 py-20">
+      <div className="relative z-[45] w-full max-w-[1280px] mx-auto px-4 sm:px-6 flex flex-col items-center text-center gap-3 md:gap-5 py-6 md:py-12">
         <div className="flex flex-col items-center gap-4">
           <span
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-widest"
@@ -82,31 +84,27 @@ export function HeroSection() {
           <h1
             style={{
               fontFamily: "'Sora', 'Inter', sans-serif",
-              fontWeight: 800,
+              fontWeight: 1000,
               fontSize: "clamp(2rem, 5vw, 3.5rem)",
               color: "white",
               lineHeight: 1.1,
               letterSpacing: "-0.5px",
             }}
           >
-            Find & Book
+            Find Your Perfect Stay
             <br />
-            <span style={{ color: "#EBF5FB" }}>
-              Extraordinary Hotels
-            </span>
           </h1>
 
           <p
+            className="max-w-xs sm:max-w-md md:max-w-lg"
             style={{
-              fontSize: "1.0625rem",
+              fontSize: "clamp(0.875rem, 2.5vw, 1.0625rem)",
               color: "rgba(235,245,251,0.88)",
               fontFamily: "'Inter', sans-serif",
-              maxWidth: "500px",
               lineHeight: 1.6,
             }}
           >
-            Hotels, villas & unique stays handpicked across 195+ countries —
-            from Kathmandu to the Maldives.
+           Discover Hotels, Villas & Unique Accommadations Around The World.
           </p>
         </div>
 
@@ -116,21 +114,21 @@ export function HeroSection() {
         </div>
 
         {/* Stats */}
-        <div className="flex flex-wrap items-center justify-center gap-6">
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 md:gap-6">
           {[
             "50,000+ Properties",
             "195+ Countries",
             "4.9★ Avg Rating",
           ].map((stat) => (
-            <div key={stat} className="flex items-center gap-2">
+            <div key={stat} className="flex items-center gap-1.5 md:gap-2">
               <div
-                className="w-1.5 h-1.5 rounded-full"
+                className="w-1 h-1.5 md:w-1.5 md:h-1.5 rounded-full"
                 style={{ backgroundColor: "#2E86AB" }}
               />
               <span
+                className="text-[0.75rem] md:text-[0.8125rem]"
                 style={{
                   color: "rgba(235,245,251,0.8)",
-                  fontSize: "0.8125rem",
                   fontFamily: "'Inter', sans-serif",
                 }}
               >

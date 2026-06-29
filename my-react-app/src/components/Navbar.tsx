@@ -1,9 +1,17 @@
 import { useState, useRef, useEffect } from "react";
-import { Search, ChevronDown, LogOut, LayoutDashboard, User, Settings, MapPin, Calendar, Users } from "lucide-react";
+import { Search, ChevronDown, LogOut, LayoutDashboard, User, Settings, MapPin, Plus, Minus } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { CountryCurrencyPicker } from "./CountryCurrencyPicker";
-import { Logo } from "./Logo";
 import { useAuth } from "../context/AuthContext";
+import { hotels } from "../data/hotels";
+import logo1 from "../assets/logo1.png";
+
+interface GuestCount {
+  adults: number;
+  children: number;
+  infants: number;
+}
+
 
 const dashboardPaths: Record<string, string> = {
   superadmin:   "/dashboard/superadmin",
@@ -16,24 +24,52 @@ const dashboardPaths: Record<string, string> = {
 export function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 80);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
   const [searchWhere, setSearchWhere] = useState("");
   const [searchCheckIn, setSearchCheckIn] = useState("");
   const [searchCheckOut, setSearchCheckOut] = useState("");
-  const [searchGuests, setSearchGuests] = useState(1);
+  const [searchGuests, setSearchGuests] = useState<GuestCount>({ adults: 1, children: 0, infants: 0 });
+  const [showWhereDropdown, setShowWhereDropdown] = useState(false);
+  const [showDateDropdown, setShowDateDropdown] = useState(false);
+  const [showGuestDropdown, setShowGuestDropdown] = useState(false);
 
   const menuRef = useRef<HTMLDivElement>(null);
-  const searchRef = useRef<HTMLDivElement>(null);
+  const whereRef = useRef<HTMLDivElement>(null);
+  const dateRef = useRef<HTMLDivElement>(null);
+  const guestRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const h = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) setSearchOpen(false);
+      if (whereRef.current && !whereRef.current.contains(e.target as Node)) setShowWhereDropdown(false);
+      if (dateRef.current && !dateRef.current.contains(e.target as Node)) setShowDateDropdown(false);
+      if (guestRef.current && !guestRef.current.contains(e.target as Node)) setShowGuestDropdown(false);
     };
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, []);
+
+  const suggestions = Array.from(
+    new Set(hotels.map(h => `${h.city}, ${h.country}`))
+  ).filter(s => searchWhere.length === 0 || s.toLowerCase().includes(searchWhere.toLowerCase())).slice(0, 6);
+
+  const totalGuests = searchGuests.adults + searchGuests.children;
+  const guestLabel = totalGuests === 0 ? "Add guests" : `${totalGuests} guest${totalGuests > 1 ? "s" : ""}${searchGuests.infants > 0 ? `, ${searchGuests.infants} infant${searchGuests.infants > 1 ? "s" : ""}` : ""}`;
+
+  const adjustGuests = (key: keyof GuestCount, delta: number) => {
+    setSearchGuests(prev => {
+      const next = { ...prev, [key]: Math.max(key === "adults" ? 1 : 0, prev[key] + delta) };
+      return next;
+    });
+  };
 
   const firstName = user && (user.firstName || user.first_name);
   const lastName = user && (user.lastName || user.last_name);
@@ -46,8 +82,10 @@ export function Navbar() {
     if (searchWhere) params.set("where", searchWhere);
     if (searchCheckIn) params.set("checkIn", searchCheckIn);
     if (searchCheckOut) params.set("checkOut", searchCheckOut);
-    if (searchGuests > 0) params.set("guests", String(searchGuests));
-    setSearchOpen(false);
+    if (totalGuests > 0) params.set("guests", String(totalGuests));
+    setShowWhereDropdown(false);
+    setShowDateDropdown(false);
+    setShowGuestDropdown(false);
     navigate(`/?${params}`);
     window.scrollTo({ top: 400, behavior: "smooth" });
   };
@@ -61,7 +99,7 @@ export function Navbar() {
         if (input) input.focus();
       }, 500);
     } else {
-      setSearchOpen(true);
+      setShowWhereDropdown(true);
     }
   };
 
@@ -74,7 +112,7 @@ export function Navbar() {
     else parts.push("Anywhere");
     if (searchCheckIn) parts.push(dateLabel(searchCheckIn) ?? "Any week");
     else parts.push("Any week");
-    if (searchGuests > 1) parts.push(`${searchGuests} guests`);
+    if (totalGuests > 0) parts.push(guestLabel);
     else parts.push("Add guests");
     return parts;
   };
@@ -82,117 +120,189 @@ export function Navbar() {
   const [p1, p2, p3] = pillLabel();
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-border shadow-sm">
+    <header
+      className={`sticky top-0 z-50 transition-all duration-300 ${
+        scrolled
+          ? "bg-white/90 backdrop-blur-md shadow-sm border-b border-border"
+          : "bg-white/30 backdrop-blur-lg border-b border-transparent"
+      }`}
+    >
       <div className="max-w-[1280px] mx-auto px-6 h-[68px] flex items-center justify-between gap-4">
 
-        <Link to="/" className="shrink-0"><Logo size={34} /></Link>
-
-        {/* Navbar search pill */}
-        <div ref={searchRef} className="relative hidden md:block flex-1 max-w-sm mx-4">
-          <div
-            className="flex items-center border rounded-full shadow-sm hover:shadow-md transition-shadow cursor-pointer bg-white divide-x"
-            style={{ borderColor: "var(--border)" }}
-            onClick={() => setSearchOpen(v => !v)}
+        <Link to="/" className="shrink-0 flex items-center gap-2 group">
+          <img src={logo1} alt="StayEasy" className="h-[34px] w-auto transition-transform duration-300 group-hover:scale-105" />
+          <span
+            style={{
+              fontFamily: "'Sora', 'Inter', sans-serif",
+              fontWeight: 800,
+              fontSize: "20px",
+              letterSpacing: "-0.5px",
+              lineHeight: 1,
+              color: "#1A3C5E",
+            }}
           >
-            <button className="px-5 py-2.5 text-sm font-medium rounded-l-full transition-colors hover:bg-accent truncate max-w-[120px]" style={{ color: "var(--foreground)" }}>
-              {p1}
-            </button>
-            <button className="px-5 py-2.5 text-sm font-medium transition-colors hover:bg-accent whitespace-nowrap" style={{ color: "var(--foreground)" }}>
-              {p2}
-            </button>
-            <button
-              className="flex items-center gap-3 pl-5 pr-2 py-2 rounded-r-full transition-colors hover:bg-accent"
-              style={{ color: "var(--foreground)" }}
-            >
-              <span className="text-sm whitespace-nowrap" style={{ color: "var(--muted-foreground)" }}>{p3}</span>
-              <span className="p-2 rounded-full" style={{ backgroundColor: "var(--primary)" }}>
-                <Search size={13} color="white" />
-              </span>
-            </button>
-          </div>
+            Stay<span style={{ color: "#2E86AB" }}>Easy</span>
+          </span>
+        </Link>
 
-          {/* Navbar mini search dropdown */}
-          {searchOpen && (
-            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-[420px] bg-white rounded-2xl shadow-2xl border border-border z-50 p-5">
-              <p className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: "var(--muted-foreground)" }}>Quick Search</p>
-              <div className="flex flex-col gap-3">
-                {/* Where */}
-                <div className="flex items-center gap-3 border border-border rounded-xl px-4 py-3 focus-within:border-primary transition-colors">
-                  <MapPin size={15} style={{ color: "var(--primary)", flexShrink: 0 }} />
-                  <div className="flex-1">
-                    <p className="text-xs font-bold uppercase tracking-wider mb-0.5" style={{ color: "var(--muted-foreground)" }}>Where</p>
+        {/* Navbar search pill — independent dropdowns */}
+        <div className="relative hidden md:block flex-1 max-w-sm mx-4">
+          <div
+            className="flex items-center border rounded-full shadow-sm hover:shadow-md transition-shadow bg-white divide-x"
+            style={{ borderColor: "var(--border)" }}
+          >
+            {/* Where */}
+            <div ref={whereRef} className="relative">
+              <button
+                className="px-5 py-2.5 text-sm font-medium rounded-l-full transition-all duration-200 hover:bg-accent hover:scale-[1.02] active:scale-95 truncate max-w-[120px]"
+                style={{ color: "var(--foreground)" }}
+                onClick={() => { setShowWhereDropdown(v => !v); setShowDateDropdown(false); setShowGuestDropdown(false); }}
+              >
+                {p1}
+              </button>
+              {showWhereDropdown && (
+                <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-border z-50 p-4">
+                  <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "var(--muted-foreground)" }}>Where to?</p>
+                  <div className="flex items-center gap-2 border border-border rounded-lg px-3 py-2 focus-within:border-primary transition-colors">
+                    <MapPin size={15} style={{ color: "var(--primary)", flexShrink: 0 }} />
                     <input
                       type="text"
                       placeholder="Search destinations"
                       value={searchWhere}
-                      onChange={e => setSearchWhere(e.target.value)}
+                      onChange={e => { setSearchWhere(e.target.value); }}
                       className="w-full text-sm bg-transparent border-none outline-none placeholder:text-muted-foreground"
                       style={{ color: "var(--foreground)" }}
                       autoFocus
                     />
                   </div>
+                  {suggestions.length > 0 && (
+                    <div className="mt-2 max-h-48 overflow-y-auto">
+                      {searchWhere === "" && (
+                        <div className="px-1 pt-2 pb-1 text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>
+                          Popular destinations
+                        </div>
+                      )}
+                      {suggestions.map(s => (
+                        <button
+                          key={s}
+                          className="w-full flex items-center gap-3 px-2 py-2 text-sm hover:bg-accent rounded-lg transition-colors text-left"
+                          style={{ color: "var(--foreground)" }}
+                          onClick={() => { setSearchWhere(s); setShowWhereDropdown(false); }}
+                        >
+                          <MapPin size={14} style={{ color: "var(--primary)", flexShrink: 0 }} />
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                {/* Dates */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="flex items-center gap-2 border border-border rounded-xl px-4 py-3 focus-within:border-primary transition-colors">
-                    <Calendar size={14} style={{ color: "var(--primary)", flexShrink: 0 }} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold uppercase tracking-wider mb-0.5" style={{ color: "var(--muted-foreground)" }}>Check in</p>
+              )}
+            </div>
+
+            {/* Any week / dates */}
+            <div ref={dateRef} className="relative">
+              <button
+                className="px-5 py-2.5 text-sm font-medium transition-all duration-200 hover:bg-accent hover:scale-[1.02] active:scale-95 whitespace-nowrap"
+                style={{ color: "var(--foreground)" }}
+                onClick={() => { setShowDateDropdown(v => !v); setShowWhereDropdown(false); setShowGuestDropdown(false); }}
+              >
+                {p2}
+              </button>
+              {showDateDropdown && (
+                <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-2xl border border-border z-50 p-5 min-w-[280px]">
+                  <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "var(--muted-foreground)" }}>Select dates</p>
+                  <div className="flex flex-col gap-3">
+                    <div>
+                      <label className="text-xs font-semibold mb-1 block" style={{ color: "var(--foreground)" }}>Check in</label>
                       <input
                         type="date"
                         value={searchCheckIn}
                         min={new Date().toISOString().split("T")[0]}
                         onChange={e => { setSearchCheckIn(e.target.value); if (searchCheckOut && e.target.value > searchCheckOut) setSearchCheckOut(""); }}
-                        className="w-full text-xs bg-transparent border-none outline-none"
+                        className="w-full border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
                         style={{ color: "var(--foreground)" }}
                       />
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2 border border-border rounded-xl px-4 py-3 focus-within:border-primary transition-colors">
-                    <Calendar size={14} style={{ color: "var(--primary)", flexShrink: 0 }} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold uppercase tracking-wider mb-0.5" style={{ color: "var(--muted-foreground)" }}>Check out</p>
+                    <div>
+                      <label className="text-xs font-semibold mb-1 block" style={{ color: "var(--foreground)" }}>Check out</label>
                       <input
                         type="date"
                         value={searchCheckOut}
                         min={searchCheckIn || new Date().toISOString().split("T")[0]}
                         onChange={e => setSearchCheckOut(e.target.value)}
-                        className="w-full text-xs bg-transparent border-none outline-none"
+                        className="w-full border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
                         style={{ color: "var(--foreground)" }}
                       />
                     </div>
+                    <button
+                      onClick={() => setShowDateDropdown(false)}
+                      className="mt-1 w-full py-2 rounded-lg text-sm font-semibold text-white transition-all hover:opacity-90"
+                      style={{ backgroundColor: "var(--primary)" }}
+                    >
+                      Apply
+                    </button>
                   </div>
                 </div>
-                {/* Guests */}
-                <div className="flex items-center gap-3 border border-border rounded-xl px-4 py-3">
-                  <Users size={15} style={{ color: "var(--primary)", flexShrink: 0 }} />
-                  <div className="flex-1">
-                    <p className="text-xs font-bold uppercase tracking-wider mb-0.5" style={{ color: "var(--muted-foreground)" }}>Guests</p>
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => setSearchGuests(g => Math.max(1, g - 1))}
-                        className="w-6 h-6 rounded-full border border-border flex items-center justify-center text-xs hover:border-foreground transition-colors disabled:opacity-30"
-                        disabled={searchGuests <= 1}
-                      >−</button>
-                      <span className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>{searchGuests} guest{searchGuests > 1 ? "s" : ""}</span>
-                      <button
-                        onClick={() => setSearchGuests(g => g + 1)}
-                        className="w-6 h-6 rounded-full border border-border flex items-center justify-center text-xs hover:border-foreground transition-colors"
-                      >+</button>
-                    </div>
-                  </div>
-                </div>
-                <button
-                  onClick={handleNavbarSearch}
-                  className="w-full py-3 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 hover:shadow-lg active:scale-95"
-                  style={{ backgroundColor: "var(--primary)" }}
-                >
-                  <Search size={15} />
-                  Search
-                </button>
-              </div>
+              )}
             </div>
-          )}
+
+            {/* Guests */}
+            <div ref={guestRef} className="relative">
+              <button
+                className="px-5 py-2.5 text-sm font-medium transition-all duration-200 hover:bg-accent hover:scale-[1.02] active:scale-95 whitespace-nowrap"
+                style={{ color: "var(--foreground)" }}
+                onClick={() => { setShowGuestDropdown(v => !v); setShowWhereDropdown(false); setShowDateDropdown(false); }}
+              >
+                {p3}
+              </button>
+              {showGuestDropdown && (
+                <div className="absolute top-full right-0 mt-2 bg-white rounded-xl shadow-2xl border border-border z-50 p-5 w-72">
+                  <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "var(--muted-foreground)" }}>Guests</p>
+                  {([
+                    { key: "adults" as keyof GuestCount, label: "Adults", sub: "Ages 13 or above" },
+                    { key: "children" as keyof GuestCount, label: "Children", sub: "Ages 2–12" },
+                    { key: "infants" as keyof GuestCount, label: "Infants", sub: "Under 2" },
+                  ]).map(({ key, label, sub }) => (
+                    <div key={key} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+                      <div>
+                        <p className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>{label}</p>
+                        <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>{sub}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => adjustGuests(key, -1)}
+                          disabled={searchGuests[key] <= (key === "adults" ? 1 : 0)}
+                          className="w-7 h-7 rounded-full border flex items-center justify-center transition-all hover:border-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+                          style={{ borderColor: "var(--border)" }}
+                        >
+                          <Minus size={12} />
+                        </button>
+                        <span className="w-4 text-center text-sm font-semibold" style={{ color: "var(--foreground)" }}>{searchGuests[key]}</span>
+                        <button
+                          onClick={() => adjustGuests(key, 1)}
+                          className="w-7 h-7 rounded-full border flex items-center justify-center transition-all hover:border-foreground"
+                          style={{ borderColor: "var(--border)" }}
+                        >
+                          <Plus size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Search button */}
+            <button
+              onClick={handleNavbarSearch}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-r-full transition-all duration-200 hover:bg-accent active:scale-95"
+              style={{ color: "var(--foreground)" }}
+            >
+              <span className="p-2 rounded-full" style={{ backgroundColor: "var(--primary)" }}>
+                <Search size={13} color="white" />
+              </span>
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
@@ -200,25 +310,30 @@ export function Navbar() {
 
           <Link
             to="/host"
-            className="hidden md:block px-4 py-2 text-sm font-medium rounded-full transition-colors hover:bg-accent whitespace-nowrap"
-            style={{ color: "var(--foreground)" }}
+            className="hidden md:block px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 hover:bg-white/20 hover:scale-105 active:scale-95 whitespace-nowrap"
+            style={{ color: scrolled ? "var(--foreground)" : "var(--brand-dark)" }}
           >
             Become a Host
           </Link>
 
           {/* Mobile search icon */}
           <button
-            className="md:hidden p-2 rounded-full hover:bg-accent transition-colors"
+            className="md:hidden p-2 rounded-full transition-all duration-200 hover:bg-white/20 hover:scale-105 active:scale-95"
             onClick={scrollToHeroSearch}
+            style={{ color: scrolled ? "var(--foreground)" : "var(--brand-dark)" }}
           >
-            <Search size={18} style={{ color: "var(--foreground)" }} />
+            <Search size={18} />
           </button>
 
           <div ref={menuRef} className="relative ml-1">
             <button
               onClick={() => setMenuOpen(v => !v)}
-              className="flex items-center gap-2 border rounded-full px-3 py-2 hover:shadow-md transition-shadow bg-white"
-              style={{ borderColor: "var(--border)" }}
+              className="flex items-center gap-2 border rounded-full px-3 py-2 hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-200"
+              style={{
+                borderColor: scrolled ? "var(--border)" : "rgba(255,255,255,0.3)",
+                backgroundColor: scrolled ? "white" : "rgba(255,255,255,0.15)",
+                backdropFilter: scrolled ? "none" : "blur(4px)",
+              }}
             >
               {user ? (
                 <>
@@ -227,15 +342,15 @@ export function Navbar() {
                     {user.countryFlag && <span className="text-base leading-none">{user.countryFlag}</span>}
                     {displayName}
                   </span>
-                  <ChevronDown size={13} className={`transition-transform ${menuOpen ? "rotate-180" : ""}`} style={{ color: "var(--muted-foreground)" }} />
+                  <ChevronDown size={13} className={`transition-transform ${menuOpen ? "rotate-180" : ""}`} style={{ color: scrolled ? "var(--muted-foreground)" : "rgba(255,255,255,0.7)" }} />
                 </>
               ) : (
                 <>
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: "var(--muted)" }}>
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: scrolled ? "var(--muted)" : "rgba(255,255,255,0.2)" }}>
                     <User size={15} style={{ color: "var(--muted-foreground)" }} />
                   </div>
                   <span className="hidden sm:block text-sm font-medium" style={{ color: "var(--foreground)" }}>Account</span>
-                  <ChevronDown size={13} className={`transition-transform ${menuOpen ? "rotate-180" : ""}`} style={{ color: "var(--muted-foreground)" }} />
+                  <ChevronDown size={13} className={`transition-transform ${menuOpen ? "rotate-180" : ""}`} style={{ color: scrolled ? "var(--muted-foreground)" : "rgba(255,255,255,0.7)" }} />
                 </>
               )}
             </button>

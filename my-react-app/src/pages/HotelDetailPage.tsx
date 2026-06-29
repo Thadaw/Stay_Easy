@@ -49,8 +49,14 @@ export default function HotelDetailPage() {
 
   const related = hotels.filter((h) => h.id !== hotel.id && h.category === hotel.category).slice(0, 4);
 
-  function prevImg() { setCurrentImg((v) => (v === 0 ? hotel.images.length - 1 : v - 1)); }
-  function nextImg() { setCurrentImg((v) => (v === hotel.images.length - 1 ? 0 : v + 1)); }
+  const hotelImages = hotel.images;
+  function prevImg() {
+    setCurrentImg((v) => (v === 0 ? hotelImages.length - 1 : v - 1));
+  }
+  function nextImg() {
+    setCurrentImg((v) => (v === hotelImages.length - 1 ? 0 : v + 1));
+  }
+
 
   const visibleAmenities = showAllAmenities ? hotel.amenities : hotel.amenities.slice(0, 8);
 
