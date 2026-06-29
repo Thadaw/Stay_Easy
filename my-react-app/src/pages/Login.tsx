@@ -1,12 +1,16 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import axios from 'axios'
 import BuildingScene from '../components/BuildingScene'
 import api from '../api'
+import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
   const navigate = useNavigate()
+  const { login } = useAuth()
   const [searchParams] = useSearchParams()
   const isHost = searchParams.get('host') === 'true'
+  const redirect = searchParams.get('redirect') || (isHost ? '/become-a-host' : '/')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
@@ -15,7 +19,7 @@ export default function Login() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // true once the businessman should be triggered to walk in
+  
   const [loginClicked, setLoginClicked] = useState(false)
 
   const fieldsReady = email.trim().length > 0 && password.trim().length > 0
@@ -23,20 +27,30 @@ export default function Login() {
   const handleLogin = async () => {
     setError('')
     setLoading(true)
-    setLoginClicked(true) // kick off the door animation immediately
+    setLoginClicked(true) 
 
     try {
-      const form = new FormData()
-      form.append('username', email)
-      form.append('password', password)
-      const res = await api.post('/api/v1/auth/users/login', form, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
-      localStorage.setItem('token', res.data.access_token)
-      setTimeout(() => navigate(isHost ? '/host/portal' : '/'), 1700)
-    } catch {
-      setError('Invalid email or password.')
-      setLoginClicked(false) // let him walk back out if login failed
+      const params = new URLSearchParams()
+      params.append('grant_type', 'password')
+      params.append('username', email)
+      params.append('password', password)
+      const res = await api.post('/auth/users/login', params)
+      await login(res.data.access_token)
+      setTimeout(() => navigate(redirect), 1700)
+    } catch (err) {
+      const isAxiosError = axios.isAxiosError(err)
+      const status = isAxiosError ? err.response?.status : undefined
+      const detail = isAxiosError ? err.response?.data?.detail || '' : ''
+      if (status === 404) {
+        setError('No account found with this email. Please sign up first.')
+      } else if (status === 403 || /verified|verify|activate/i.test(detail)) {
+        setError('Account not verified. Please check your email for the verification code.')
+      } else if (status === 401) {
+        setError('Invalid email or password.')
+      } else {
+        setError(detail || 'Invalid email or password.')
+      }
+      setLoginClicked(false)
       setLoading(false)
     }
   }
@@ -105,7 +119,7 @@ export default function Login() {
               Login
             </div>
             <div
-              onClick={() => navigate(isHost ? '/signup?host=true' : '/signup')}
+              onClick={() => navigate(isHost ? '/signup?host=true' : redirect ? `/signup?redirect=${encodeURIComponent(redirect)}` : '/signup')}
               style={{
                 padding: '3px 0',
                 fontSize: 11,
@@ -147,7 +161,7 @@ export default function Login() {
               value={email}
               onChange={e => setEmail(e.target.value)}
               onFocus={() => setPwFocused(false)}
-              placeholder="you@example.com"
+              placeholder="Enter your email"
               autoComplete="off"
               style={{
                 width: '100%',
@@ -182,7 +196,7 @@ export default function Login() {
               onChange={e => setPassword(e.target.value)}
               onFocus={() => setPwFocused(true)}
               onBlur={() => setPwFocused(false)}
-              placeholder="••••••••"
+              placeholder="Set your password"
               autoComplete="off"
               style={{
                 width: '100%',
@@ -260,7 +274,7 @@ export default function Login() {
           <div style={{ textAlign: 'center', marginTop: 11, fontSize: 12, color: '#aaa' }}>
             Don't have an account?{' '}
             <span
-              onClick={() => navigate(isHost ? '/signup?host=true' : '/signup')}
+              onClick={() => navigate(isHost ? '/signup?host=true' : redirect ? `/signup?redirect=${encodeURIComponent(redirect)}` : '/signup')}
               style={{ color: '#111', fontWeight: 600, cursor: 'pointer' }}
             >
               Sign up

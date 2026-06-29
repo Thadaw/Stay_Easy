@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Heart, Star, MapPin } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { useFavorites } from "../context/FavoritesContext";
 
 interface HotelCardProps {
   id: number;
@@ -15,8 +17,11 @@ interface HotelCardProps {
 }
 
 export function HotelCard({ id, name, location, rating, reviews, price, imageUrl, tag, isSuperhost }: HotelCardProps) {
-  const [liked, setLiked] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const liked = isFavorite(id);
 
   return (
     <Link to={`/hotel/${id}`} className="group block bg-white rounded-xl border border-border overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5">
@@ -43,7 +48,15 @@ export function HotelCard({ id, name, location, rating, reviews, price, imageUrl
         </div>
 
         <button
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setLiked(!liked); }}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!user) {
+              navigate('/signup');
+            } else {
+              toggleFavorite(id);
+            }
+          }}
           className="absolute top-3 right-3 z-10 p-2 rounded-full transition-all duration-200 hover:scale-110 backdrop-blur-sm active:scale-90"
           style={{ backgroundColor: liked ? "rgba(255,255,255,1)" : "rgba(255,255,255,0.85)" }}
         >

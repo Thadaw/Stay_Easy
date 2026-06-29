@@ -8,6 +8,7 @@ import HostSignup from './pages/HostSignup'
 import HostPortalPage from './pages/HostPortalPage'
 import CountryPage from './pages/CountryPage'
 import HotelDetailPage from './pages/HotelDetailPage'
+import ReservePage from './pages/ReservePage'
 function App() {
   return (
     <BrowserRouter>
@@ -22,6 +23,7 @@ function App() {
         <Route path="/host/portal" element={<HostPortalPage />} />
         <Route path="/country/:code" element={<CountryPage />} />
         <Route path="/hotel/:id" element={<HotelDetailPage />} />
+        <Route path="/reserve/:id" element={<ReservePage />} />
       </Routes>
     </BrowserRouter>
   )

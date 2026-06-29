@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { Star, Heart, Share2, ChevronLeft, ChevronRight, Wifi, Car, Utensils, Waves, Mountain, Dumbbell, ShieldCheck, ArrowLeft, Users, BedDouble, Bath } from "lucide-react";
+import { Star, Heart, Share2, ChevronLeft, ChevronRight, ChevronDown, Wifi, Car, Utensils, Waves, Mountain, Dumbbell, ShieldCheck, ArrowLeft, Users, BedDouble, Bath, Plus, Minus } from "lucide-react";
 import { hotels, reviewSamples } from "../data/hotels";
 import { HotelCard } from "../components/HotelCard";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
+import { useAuth } from "../context/AuthContext";
+import { useFavorites } from "../context/FavoritesContext";
 
 const amenityIcons: Record<string, typeof Wifi> = {
   "Free WiFi": Wifi,
@@ -15,17 +17,28 @@ const amenityIcons: Record<string, typeof Wifi> = {
   "Gym access": Dumbbell,
 };
 
+interface GuestCount {
+  adults: number;
+  children: number;
+  infants: number;
+  pets: number;
+}
+
 export default function HotelDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const hotel = hotels.find((h) => h.id === Number(id));
   const [currentImg, setCurrentImg] = useState(0);
-  const [liked, setLiked] = useState(false);
   const [checkIn, setCheckIn] = useState("");
+  const { user } = useAuth();
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const liked = isFavorite(Number(id));
   const [checkOut, setCheckOut] = useState("");
-  const [guests, setGuests] = useState(1);
+  const [guestCount, setGuestCount] = useState<GuestCount>({ adults: 1, children: 0, infants: 0, pets: 0 });
+  const [showGuestPicker, setShowGuestPicker] = useState(false);
   const [showAllAmenities, setShowAllAmenities] = useState(false);
   const [showAllPhotos, setShowAllPhotos] = useState(false);
+  const guestRef = useRef<HTMLDivElement>(null);
 
   if (!hotel) {
     return (
@@ -60,6 +73,31 @@ export default function HotelDetailPage() {
 
   const visibleAmenities = showAllAmenities ? hotel.amenities : hotel.amenities.slice(0, 8);
 
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (guestRef.current && !guestRef.current.contains(e.target as Node)) {
+        setShowGuestPicker(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const totalGuests = guestCount.adults + guestCount.children;
+  const guestLabel = `${totalGuests} guest${totalGuests !== 1 ? 's' : ''}${guestCount.infants > 0 ? `, ${guestCount.infants} infant${guestCount.infants > 1 ? 's' : ''}` : ''}${guestCount.pets > 0 ? `, ${guestCount.pets} pet${guestCount.pets > 1 ? 's' : ''}` : ''}`;
+
+  const adjustGuest = (key: keyof GuestCount, delta: number) => {
+    setGuestCount(prev => {
+      const min = key === 'adults' ? 1 : 0;
+      const next = { ...prev, [key]: Math.max(min, prev[key] + delta) };
+      if (key !== 'pets') {
+        const guestTotal = next.adults + next.children;
+        if (guestTotal > hotel.maxGuests) return prev;
+      }
+      return next;
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       <Navbar />
@@ -93,7 +131,13 @@ export default function HotelDetailPage() {
             <button className="flex items-center gap-1.5 text-sm font-medium text-foreground hover:bg-muted px-3 py-2 rounded-xl transition-colors">
               <Share2 size={15} /> Share
             </button>
-            <button onClick={() => setLiked(!liked)} className="flex items-center gap-1.5 text-sm font-medium text-foreground hover:bg-muted px-3 py-2 rounded-xl transition-colors">
+            <button onClick={() => {
+              if (!user) {
+                navigate('/signup');
+              } else {
+                toggleFavorite(Number(id));
+              }
+            }} className="flex items-center gap-1.5 text-sm font-medium text-foreground hover:bg-muted px-3 py-2 rounded-xl transition-colors">
               <Heart size={15} className={liked ? "fill-primary stroke-primary" : ""} /> Save
             </button>
           </div>
@@ -123,15 +167,16 @@ export default function HotelDetailPage() {
               </div>
             </div>
 
-            <div className="hidden md:grid grid-cols-4 grid-rows-2 gap-2 h-[500px]">
-              <div className="col-span-2 row-span-2">
-                <img src={hotel.images[0]} alt={hotel.name} className="w-full h-full object-cover" />
+            <div className="hidden md:grid grid-cols-3 gap-2 h-[400px]">
+              <div className="col-span-2 row-span-2 overflow-hidden">
+                <img src={hotel.images[0]} alt={hotel.name} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300 cursor-pointer" />
               </div>
-              {hotel.images.slice(1, 5).map((img, i) => (
-                <div key={i} className="overflow-hidden">
-                  <img src={img} alt={`${hotel.name} ${i + 2}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300 cursor-pointer" />
-                </div>
-              ))}
+              <div className="overflow-hidden">
+                <img src={hotel.images[1]} alt={`${hotel.name} 2`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300 cursor-pointer" />
+              </div>
+              <div className="overflow-hidden">
+                <img src={hotel.images[2]} alt={`${hotel.name} 3`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300 cursor-pointer" />
+              </div>
             </div>
 
             <button
@@ -240,8 +285,8 @@ export default function HotelDetailPage() {
                 </div>
               </div>
 
-              <div className="border border-border rounded-xl overflow-hidden mb-3">
-                <div className="grid grid-cols-2 divide-x divide-border">
+              <div className="border border-border rounded-xl mb-3">
+                <div className="grid grid-cols-2 divide-x divide-border rounded-t-xl overflow-hidden">
                   <div className="p-3">
                     <label className="block text-xs font-semibold uppercase tracking-wide text-foreground mb-1">Check-in</label>
                     <input type="date" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} className="w-full text-sm bg-transparent outline-none text-foreground" />
@@ -251,17 +296,69 @@ export default function HotelDetailPage() {
                     <input type="date" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} className="w-full text-sm bg-transparent outline-none text-foreground" />
                   </div>
                 </div>
-                <div className="border-t border-border p-3">
+                <div ref={guestRef} className="border-t border-border p-3 relative rounded-b-xl">
                   <label className="block text-xs font-semibold uppercase tracking-wide text-foreground mb-1">Guests</label>
-                  <div className="flex items-center gap-3">
-                    <button onClick={() => setGuests(Math.max(1, guests - 1))} className="w-7 h-7 rounded-full border border-border flex items-center justify-center text-foreground hover:bg-muted text-lg leading-none">−</button>
-                    <span className="text-sm font-medium text-foreground">{guests} guest{guests > 1 ? "s" : ""}</span>
-                    <button onClick={() => setGuests(Math.min(hotel.maxGuests, guests + 1))} className="w-7 h-7 rounded-full border border-border flex items-center justify-center text-foreground hover:bg-muted text-lg leading-none">+</button>
-                  </div>
+                  <button
+                    onClick={() => setShowGuestPicker(v => !v)}
+                    className="flex items-center justify-between w-full text-sm text-foreground"
+                  >
+                    <span>{guestLabel}</span>
+                    <ChevronDown size={14} className={`transition-transform duration-200 ${showGuestPicker ? 'rotate-180' : ''}`} />
+                  </button>
+                  {showGuestPicker && (
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-border rounded-xl shadow-xl z-50 p-4">
+                      {([
+                        { key: 'adults' as keyof GuestCount, label: 'Adults', sub: 'Ages 13 or above' },
+                        { key: 'children' as keyof GuestCount, label: 'Children', sub: 'Ages 2–12' },
+                        { key: 'infants' as keyof GuestCount, label: 'Infants', sub: 'Under 2' },
+                        { key: 'pets' as keyof GuestCount, label: 'Pets', sub: 'Bringing a service animal?' },
+                      ]).map(({ key, label, sub }) => (
+                        <div key={key} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">{label}</p>
+                            <p className="text-xs text-muted-foreground">{sub}</p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => adjustGuest(key, -1)}
+                              disabled={guestCount[key] <= (key === 'adults' ? 1 : 0)}
+                              className="w-7 h-7 rounded-full border-2 border-border flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:border-primary hover:bg-primary/10 transition-all"
+                            >
+                              <Minus size={10} />
+                            </button>
+                            <span className="w-5 text-center text-sm font-bold tabular-nums text-foreground">{guestCount[key]}</span>
+                            <button
+                              onClick={() => adjustGuest(key, 1)}
+                              className="w-7 h-7 rounded-full border-2 border-border flex items-center justify-center hover:border-primary hover:bg-primary/10 transition-all"
+                            >
+                              <Plus size={10} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <button className="w-full py-3.5 rounded-xl bg-primary text-white font-semibold text-sm hover:opacity-90 transition-all hover:shadow-lg mb-4">
+              <button
+                onClick={() => {
+                  const params = new URLSearchParams();
+                  if (checkIn) params.set('checkIn', checkIn);
+                  if (checkOut) params.set('checkOut', checkOut);
+                  params.set('adults', String(guestCount.adults));
+                  params.set('children', String(guestCount.children));
+                  params.set('infants', String(guestCount.infants));
+                  params.set('pets', String(guestCount.pets));
+                  const query = params.toString();
+                  if (!user) {
+                    navigate('/login?redirect=' + encodeURIComponent('/reserve/' + id + '?' + query));
+                  } else {
+                    navigate('/reserve/' + id + '?' + query);
+                  }
+                }}
+                className="w-full py-3.5 rounded-xl bg-primary text-white font-semibold text-sm hover:opacity-90 transition-all hover:shadow-lg mb-4"
+              >
                 Reserve now
               </button>
               <p className="text-center text-xs text-muted-foreground mb-5">You won't be charged yet</p>
