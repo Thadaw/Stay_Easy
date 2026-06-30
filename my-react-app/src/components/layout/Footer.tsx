@@ -1,6 +1,6 @@
 import { Globe } from "lucide-react";
 import { Link } from "react-router-dom";
-import logo1 from "../assets/logo1.png";
+import logo1 from "../../assets/logos/logo1.png";
 
 
 const footerLinks = {

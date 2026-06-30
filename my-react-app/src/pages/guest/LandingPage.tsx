@@ -2,13 +2,13 @@ import { useState } from "react";
 
 import { ChevronRight, Star, Shield, Globe } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import { Navbar } from "../components/Navbar";
-import { HeroSection } from "../components/HeroSection";
-import { CategoryFilter } from "../components/CategoryFilter";
-import { HotelCard } from "../components/HotelCard";
-import { DestinationCard } from "../components/DestinationCard";
-import { Footer } from "../components/Footer";
-import { hotels } from "../data/hotels";
+import { Navbar } from "../../components/layout/Navbar";
+import { HeroSection } from "../../components/HeroSection";
+import { CategoryFilter } from "../../components/CategoryFilter";
+import { HotelCard } from "../../components/HotelCard";
+import { DestinationCard } from "../../components/DestinationCard";
+import { Footer } from "../../components/layout/Footer";
+import { hotels } from "../../data/hotels";
 
 const destinations = [
   { city: "Bali", country: "Indonesia", properties: 4820, imageUrl: "https://images.unsplash.com/photo-1549294413-26f195200c16?w=400&h=530&fit=crop&auto=format" },

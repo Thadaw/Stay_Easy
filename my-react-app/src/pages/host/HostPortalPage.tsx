@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router";
-import { Logo } from "../components/Logo";
+import { Logo } from "../../components/Logo";
 
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 import {
   Eye,
   EyeOff,
@@ -19,13 +19,13 @@ import {
   ChevronRight,
   ChevronLeft,
 } from "lucide-react";
-import { PhoneInput } from "../components/PhoneInput";
-import { CountrySelect } from "../components/CountrySelect";
+import { PhoneInput } from "../../components/PhoneInput";
+import { CountrySelect } from "../../components/CountrySelect";
 import {
   Room,
   RoomsPage,
   createRoom
-} from "../components/RoomSetup";
+} from "../../components/RoomSetup";
 
 type Step =
   | "auth"

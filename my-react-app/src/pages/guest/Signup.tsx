@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import BuildingScene from '../components/BuildingScene'
-import api from '../api'
+import BuildingScene from '../../components/BuildingScene'
+import api from '../../services/api'
 
 export default function Signup() {
   const navigate = useNavigate()

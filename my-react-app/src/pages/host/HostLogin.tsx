@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import BuildingScene from '../components/BuildingScene'
-import api from '../api'
+import BuildingScene from '../../components/BuildingScene'
+import api from '../../services/api'
 
 export default function HostLogin() {
   const navigate = useNavigate()

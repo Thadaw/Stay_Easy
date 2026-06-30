@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, MapPin, Star, Calendar, Utensils, Clock, ChevronRight } from "lucide-react";
-import { getCountry } from "../data/worldCountries";
-import { hotels } from "../data/hotels";
-import { Navbar } from "../components/Navbar";
-import { Footer } from "../components/Footer";
-import { HotelCard } from "../components/HotelCard";
+import { getCountry } from "../../data/worldCountries";
+import { hotels } from "../../data/hotels";
+import { Navbar } from "../../components/layout/Navbar";
+import { Footer } from "../../components/layout/Footer";
+import { HotelCard } from "../../components/HotelCard";
 
 export default function CountryPage() {
   const { code } = useParams<{ code: string }>();

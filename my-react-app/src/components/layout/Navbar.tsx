@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { Search, ChevronDown, LogOut, LayoutDashboard, User, Settings, MapPin, Plus, Minus } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { CountryCurrencyPicker } from "./CountryCurrencyPicker";
-import { useAuth } from "../context/AuthContext";
-import { hotels } from "../data/hotels";
-import logo1 from "../assets/logo1.png";
+import { CountryCurrencyPicker } from "../CountryCurrencyPicker";
+import { useAuth } from "../../context/AuthContext";
+import { hotels } from "../../data/hotels";
+import logo1 from "../../assets/logos/logo1.png";
 
 interface GuestCount {
   adults: number;
@@ -14,7 +14,7 @@ interface GuestCount {
 
 
 const dashboardPaths: Record<string, string> = {
-  superadmin:   "/dashboard/superadmin",
+  superadmin:   "/superadmin",
   admin:        "/dashboard/admin",
   manager:      "/dashboard/manager",
   receptionist: "/dashboard/receptionist",

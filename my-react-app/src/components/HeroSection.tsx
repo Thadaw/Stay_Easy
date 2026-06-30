@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { SearchBar } from "./SearchBar";
 
-import Bg1 from "../assets/Bg1.png";
-import Bg2 from "../assets/Bg2.png";
-import Bg3 from "../assets/Bg3.png";
+import Bg1 from "../assets/images/Bg1.png";
+import Bg2 from "../assets/images/Bg2.png";
+import Bg3 from "../assets/images/Bg3.png";
 
 export function HeroSection() {
   const backgrounds = [Bg1, Bg2, Bg3];

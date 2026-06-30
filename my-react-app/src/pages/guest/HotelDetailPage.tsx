@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Star, Heart, Share2, ChevronLeft, ChevronRight, Wifi, Car, Utensils, Waves, Mountain, Dumbbell, ShieldCheck, ArrowLeft, Users, BedDouble, Bath } from "lucide-react";
-import { hotels, reviewSamples } from "../data/hotels";
-import { HotelCard } from "../components/HotelCard";
-import { Navbar } from "../components/Navbar";
-import { Footer } from "../components/Footer";
+import { hotels, reviewSamples } from "../../data/hotels";
+import { HotelCard } from "../../components/HotelCard";
+import { Navbar } from "../../components/layout/Navbar";
+import { Footer } from "../../components/layout/Footer";
 
 const amenityIcons: Record<string, typeof Wifi> = {
   "Free WiFi": Wifi,
