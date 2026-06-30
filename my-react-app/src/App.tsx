@@ -27,6 +27,20 @@ import RolesPermissions from './pages/superadmin/roles/rolespermissions'
 import Settings from './pages/superadmin/settings/settings'
 import Superadminlogin from './pages/superadmin/superadminlogin'
 import { Navigate } from 'react-router-dom'
+import OperationsLogin from './pages/operations/operationslogin'
+import OperationsLayout from './layouts/operationslayout'
+import { OperationsRoute } from './routes/OperationsRoute'
+import FrontDesk from './pages/operations/front desk/frontdesk'
+import NewBooking from './pages/operations/front desk/newbooking'
+import CheckIn from './pages/operations/front desk/checkin'
+import CheckOut from './pages/operations/front desk/checkout'
+import HousekeepingPage from './pages/operations/housekeeping/housekeeping'
+import RoomDetail from './pages/operations/housekeeping/room-detail'
+import POSPage from './pages/operations/POS/POS'
+import TableOrder from './pages/operations/POS/tableorder'
+import POSCheckout from './pages/operations/POS/POScheckout'
+import KDSPage from './pages/operations/kds/kds'
+import RestaurantAnalytics from './pages/operations/analytics/restaurantanalytics'
 
 function App() {
   return (
@@ -42,7 +56,25 @@ function App() {
         <Route path="/host/portal" element={<HostPortalPage />} />
         <Route path="/country/:code" element={<CountryPage />} />
         <Route path="/hotel/:id" element={<HotelDetailPage />} />
-        <Route path="/superadmin/login" element={<Superadminlogin />} />	
+        <Route path="/superadmin/login" element={<Superadminlogin />} />		
+        <Route path="/operations/login" element={<OperationsLogin />} />
+
+        <Route path="/ops" element={<OperationsRoute />}>
+          <Route element={<OperationsLayout />}>
+            <Route index element={<Navigate to="/ops/frontdesk" replace />} />
+            <Route path="frontdesk" element={<FrontDesk />} />
+            <Route path="new-booking" element={<NewBooking />} />
+            <Route path="checkin" element={<CheckIn />} />
+            <Route path="checkout" element={<CheckOut />} />
+            <Route path="housekeeping" element={<HousekeepingPage />} />
+            <Route path="room" element={<RoomDetail />} />
+            <Route path="pos" element={<POSPage />} />
+            <Route path="pos/table" element={<TableOrder />} />
+            <Route path="pos/checkout" element={<POSCheckout />} />
+            <Route path="kds" element={<KDSPage />} />
+            <Route path="analytics" element={<RestaurantAnalytics />} />
+          </Route>
+        </Route>
 
         <Route path="/superadmin" element={<ProtectedRoute />}>
           <Route element={<SuperAdminLayout />}>
