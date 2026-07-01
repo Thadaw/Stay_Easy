@@ -38,7 +38,20 @@ export default function HotelDetailPage() {
   const [showGuestPicker, setShowGuestPicker] = useState(false);
   const [showAllAmenities, setShowAllAmenities] = useState(false);
   const [showAllPhotos, setShowAllPhotos] = useState(false);
+  const [detailRoomId, setDetailRoomId] = useState<string | null>(null);
+  const [roomQuantities, setRoomQuantities] = useState<Record<string, number>>({});
   const guestRef = useRef<HTMLDivElement>(null);
+
+  const handleQtyChange = (roomId: string, delta: number) => {
+    setRoomQuantities(prev => {
+      const current = prev[roomId] || 0;
+      const nextVal = current + delta;
+      if (nextVal < 0) return prev;
+      const room = hotel?.roomTypes.find(r => r.id === roomId);
+      if (room && nextVal > room.availableRooms) return prev;
+      return { ...prev, [roomId]: nextVal };
+    });
+  };
 
   if (!hotel) {
     return (
@@ -55,10 +68,6 @@ export default function HotelDetailPage() {
   const nights = checkIn && checkOut
     ? Math.max(1, Math.round((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000))
     : 5;
-  const subtotal = hotel.price * nights;
-  const cleaningFee = Math.round(hotel.price * 0.15);
-  const serviceFee = Math.round(subtotal * 0.12);
-  const total = subtotal + cleaningFee + serviceFee;
 
   const related = hotels.filter((h) => h.id !== hotel.id && h.category === hotel.category).slice(0, 4);
 
@@ -188,202 +197,271 @@ export default function HotelDetailPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-12">
-          <div className="min-w-0">
-            <div className="flex flex-wrap gap-4 pb-6 border-b border-border mb-6">
-              <div className="flex items-center gap-2 text-sm text-foreground">
-                <BedDouble size={18} className="text-muted-foreground" />
-                <span><strong>{hotel.bedrooms}</strong> bedroom{hotel.bedrooms > 1 ? "s" : ""}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-foreground">
-                <BedDouble size={18} className="text-muted-foreground" />
-                <span><strong>{hotel.beds}</strong> bed{hotel.beds > 1 ? "s" : ""}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-foreground">
-                <Bath size={18} className="text-muted-foreground" />
-                <span><strong>{hotel.bathrooms}</strong> bathroom{hotel.bathrooms > 1 ? "s" : ""}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-foreground">
-                <Users size={18} className="text-muted-foreground" />
-                <span>Up to <strong>{hotel.maxGuests}</strong> guests</span>
-              </div>
+        <div>
+          <div className="flex flex-wrap gap-4 pb-6 border-b border-border mb-6">
+            <div className="flex items-center gap-2 text-sm text-foreground">
+              <BedDouble size={18} className="text-muted-foreground" />
+              <span><strong>{hotel.bedrooms}</strong> bedroom{hotel.bedrooms > 1 ? "s" : ""}</span>
             </div>
-
-            <div className="flex items-center gap-4 pb-6 border-b border-border mb-6">
-              <img src={hotel.hostAvatar} alt={hotel.hostName} className="w-14 h-14 rounded-full object-cover border border-border" />
-              <div>
-                <p className="font-semibold text-foreground">Hosted by {hotel.hostName}</p>
-                <p className="text-sm text-muted-foreground">Joined {hotel.hostJoined} · {hotel.hostReviews} reviews</p>
-              </div>
-              {hotel.isSuperhost && (
-                <span className="ml-auto flex items-center gap-1 text-xs font-semibold text-primary border border-primary/20 bg-primary/5 px-3 py-1 rounded-full">
-                  <ShieldCheck size={12} /> Superhost
-                </span>
-              )}
+            <div className="flex items-center gap-2 text-sm text-foreground">
+              <BedDouble size={18} className="text-muted-foreground" />
+              <span><strong>{hotel.beds}</strong> bed{hotel.beds > 1 ? "s" : ""}</span>
             </div>
-
-            <div className="pb-6 border-b border-border mb-6">
-              <p className="text-foreground leading-relaxed text-sm">{hotel.description}</p>
+            <div className="flex items-center gap-2 text-sm text-foreground">
+              <Bath size={18} className="text-muted-foreground" />
+              <span><strong>{hotel.bathrooms}</strong> bathroom{hotel.bathrooms > 1 ? "s" : ""}</span>
             </div>
-
-            <div className="pb-6 border-b border-border mb-6">
-              <h2 className="font-semibold text-foreground mb-4" style={{ fontSize: "1.125rem" }}>What this place offers</h2>
-              <div className="grid grid-cols-2 gap-3">
-                {visibleAmenities.map((a) => {
-                  const Icon = amenityIcons[a];
-                  return (
-                    <div key={a} className="flex items-center gap-3 text-sm text-foreground py-1">
-                      {Icon ? <Icon size={18} className="text-muted-foreground shrink-0" /> : <div className="w-4 h-4 rounded-full bg-muted shrink-0" />}
-                      {a}
-                    </div>
-                  );
-                })}
-              </div>
-              {hotel.amenities.length > 8 && (
-                <button onClick={() => setShowAllAmenities((v) => !v)} className="mt-4 px-5 py-2.5 border border-foreground rounded-xl text-sm font-medium hover:bg-muted transition-colors">
-                  {showAllAmenities ? "Show less" : `Show all ${hotel.amenities.length} amenities`}
-                </button>
-              )}
-            </div>
-
-            <div className="mb-6">
-              <div className="flex items-center gap-2 mb-6">
-                <Star size={18} className="fill-foreground stroke-foreground" />
-                <span className="font-semibold text-foreground">{hotel.rating} · {hotel.reviews} reviews</span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {reviewSamples.map((r) => (
-                  <div key={r.id} className="flex flex-col gap-3">
-                    <div className="flex items-center gap-3">
-                      <img src={r.avatar} alt={r.author} className="w-10 h-10 rounded-full object-cover" />
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">{r.author}</p>
-                        <p className="text-xs text-muted-foreground">{r.date}</p>
-                      </div>
-                      <div className="ml-auto flex">
-                        {[...Array(r.rating)].map((_, i) => <Star key={i} size={11} className="fill-foreground stroke-foreground" />)}
-                      </div>
-                    </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{r.text}</p>
-                  </div>
-                ))}
-              </div>
+            <div className="flex items-center gap-2 text-sm text-foreground">
+              <Users size={18} className="text-muted-foreground" />
+              <span>Up to <strong>{hotel.maxGuests}</strong> guests</span>
             </div>
           </div>
 
-          <div className="lg:sticky lg:top-24 self-start">
-            <div className="border border-border rounded-2xl shadow-xl p-6 bg-white">
-              <div className="flex items-baseline justify-between mb-5">
-                <div>
-                  <span className="text-2xl font-bold text-foreground">${hotel.price}</span>
-                  <span className="text-muted-foreground text-sm"> / night</span>
-                </div>
-                <div className="flex items-center gap-1 text-sm">
-                  <Star size={13} className="fill-foreground stroke-foreground" />
-                  <span className="font-semibold">{hotel.rating}</span>
-                  <span className="text-muted-foreground">({hotel.reviews})</span>
-                </div>
-              </div>
+          <div className="flex items-center gap-4 pb-6 border-b border-border mb-6">
+            <img src={hotel.hostAvatar} alt={hotel.hostName} className="w-14 h-14 rounded-full object-cover border border-border" />
+            <div>
+              <p className="font-semibold text-foreground">Hosted by {hotel.hostName}</p>
+              <p className="text-sm text-muted-foreground">Joined {hotel.hostJoined} · {hotel.hostReviews} reviews</p>
+            </div>
+            {hotel.isSuperhost && (
+              <span className="ml-auto flex items-center gap-1 text-xs font-semibold text-primary border border-primary/20 bg-primary/5 px-3 py-1 rounded-full">
+                <ShieldCheck size={12} /> Superhost
+              </span>
+            )}
+          </div>
 
-              <div className="border border-border rounded-xl mb-3">
-                <div className="grid grid-cols-2 divide-x divide-border rounded-t-xl overflow-hidden">
-                  <div className="p-3">
-                    <label className="block text-xs font-semibold uppercase tracking-wide text-foreground mb-1">Check-in</label>
-                    <input type="date" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} className="w-full text-sm bg-transparent outline-none text-foreground" />
-                  </div>
-                  <div className="p-3">
-                    <label className="block text-xs font-semibold uppercase tracking-wide text-foreground mb-1">Checkout</label>
-                    <input type="date" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} className="w-full text-sm bg-transparent outline-none text-foreground" />
-                  </div>
-                </div>
-                <div ref={guestRef} className="border-t border-border p-3 relative rounded-b-xl">
-                  <label className="block text-xs font-semibold uppercase tracking-wide text-foreground mb-1">Guests</label>
-                  <button
-                    onClick={() => setShowGuestPicker(v => !v)}
-                    className="flex items-center justify-between w-full text-sm text-foreground"
-                  >
-                    <span>{guestLabel}</span>
-                    <ChevronDown size={14} className={`transition-transform duration-200 ${showGuestPicker ? 'rotate-180' : ''}`} />
-                  </button>
-                  {showGuestPicker && (
-                    <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-border rounded-xl shadow-xl z-50 p-4">
-                      {([
-                        { key: 'adults' as keyof GuestCount, label: 'Adults', sub: 'Ages 13 or above' },
-                        { key: 'children' as keyof GuestCount, label: 'Children', sub: 'Ages 2–12' },
-                        { key: 'infants' as keyof GuestCount, label: 'Infants', sub: 'Under 2' },
-                        { key: 'pets' as keyof GuestCount, label: 'Pets', sub: 'Bringing a service animal?' },
-                      ]).map(({ key, label, sub }) => (
-                        <div key={key} className="flex items-center justify-between py-3 border-b border-border last:border-0">
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">{label}</p>
-                            <p className="text-xs text-muted-foreground">{sub}</p>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <button
-                              onClick={() => adjustGuest(key, -1)}
-                              disabled={guestCount[key] <= (key === 'adults' ? 1 : 0)}
-                              className="w-7 h-7 rounded-full border-2 border-border flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:border-primary hover:bg-primary/10 transition-all"
-                            >
-                              <Minus size={10} />
-                            </button>
-                            <span className="w-5 text-center text-sm font-bold tabular-nums text-foreground">{guestCount[key]}</span>
-                            <button
-                              onClick={() => adjustGuest(key, 1)}
-                              className="w-7 h-7 rounded-full border-2 border-border flex items-center justify-center hover:border-primary hover:bg-primary/10 transition-all"
-                            >
-                              <Plus size={10} />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
+          <div className="pb-6 border-b border-border mb-6">
+            <p className="text-foreground leading-relaxed text-sm">{hotel.description}</p>
+          </div>
 
-              <button
-                onClick={() => {
-                  const params = new URLSearchParams();
-                  if (checkIn) params.set('checkIn', checkIn);
-                  if (checkOut) params.set('checkOut', checkOut);
-                  params.set('adults', String(guestCount.adults));
-                  params.set('children', String(guestCount.children));
-                  params.set('infants', String(guestCount.infants));
-                  params.set('pets', String(guestCount.pets));
-                  const query = params.toString();
-                  if (!user) {
-                    navigate('/login?redirect=' + encodeURIComponent('/reserve/' + id + '?' + query));
-                  } else {
-                    navigate('/reserve/' + id + '?' + query);
-                  }
-                }}
-                className="w-full py-3.5 rounded-xl bg-primary text-white font-semibold text-sm hover:opacity-90 transition-all hover:shadow-lg mb-4"
-              >
-                Reserve now
+          <div className="pb-6 border-b border-border mb-6">
+            <h2 className="font-semibold text-foreground mb-4" style={{ fontSize: "1.125rem" }}>What this place offers</h2>
+            <div className="grid grid-cols-2 gap-3">
+              {visibleAmenities.map((a) => {
+                const Icon = amenityIcons[a];
+                return (
+                  <div key={a} className="flex items-center gap-3 text-sm text-foreground py-1">
+                    {Icon ? <Icon size={18} className="text-muted-foreground shrink-0" /> : <div className="w-4 h-4 rounded-full bg-muted shrink-0" />}
+                    {a}
+                  </div>
+                );
+              })}
+            </div>
+            {hotel.amenities.length > 8 && (
+              <button onClick={() => setShowAllAmenities((v) => !v)} className="mt-4 px-5 py-2.5 border border-foreground rounded-xl text-sm font-medium hover:bg-muted transition-colors">
+                {showAllAmenities ? "Show less" : `Show all ${hotel.amenities.length} amenities`}
               </button>
-              <p className="text-center text-xs text-muted-foreground mb-5">You won't be charged yet</p>
+            )}
+          </div>
 
-              <div className="flex flex-col gap-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground underline cursor-default">${hotel.price} × {nights} nights</span>
-                  <span className="text-foreground">${subtotal.toLocaleString()}</span>
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-6">
+              <Star size={18} className="fill-foreground stroke-foreground" />
+              <span className="font-semibold text-foreground">{hotel.rating} · {hotel.reviews} reviews</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {reviewSamples.map((r) => (
+                <div key={r.id} className="flex flex-col gap-3">
+                  <div className="flex items-center gap-3">
+                    <img src={r.avatar} alt={r.author} className="w-10 h-10 rounded-full object-cover" />
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{r.author}</p>
+                      <p className="text-xs text-muted-foreground">{r.date}</p>
+                    </div>
+                    <div className="ml-auto flex">
+                      {[...Array(r.rating)].map((_, i) => <Star key={i} size={11} className="fill-foreground stroke-foreground" />)}
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{r.text}</p>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground underline cursor-default">Cleaning fee</span>
-                  <span className="text-foreground">${cleaningFee}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground underline cursor-default">StayEasy service fee</span>
-                  <span className="text-foreground">${serviceFee}</span>
-                </div>
-                <div className="border-t border-border pt-3 flex justify-between font-semibold text-foreground">
-                  <span>Total before taxes</span>
-                  <span>${total.toLocaleString()}</span>
-                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="pb-6 border-b border-border mb-6">
+            <h2 className="font-semibold text-foreground mb-4" style={{ fontSize: "1.125rem" }}>Location</h2>
+            <p className="text-sm text-muted-foreground mb-3">{hotel.location}, {hotel.city}, {hotel.country}</p>
+            <div className="rounded-xl overflow-hidden border border-border h-[300px]">
+              <iframe
+                title="Property location"
+                src={`https://maps.google.com/maps?q=${hotel.lat},${hotel.lng}&z=14&output=embed`}
+                className="w-full h-full"
+                style={{ border: 0 }}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            </div>
+          </div>
+
+          <div className="border border-border rounded-2xl shadow-xl p-6 bg-white mb-10">
+            <h2 className="font-semibold text-foreground mb-6" style={{ fontSize: "1.125rem" }}>Choose your room</h2>
+
+            <div className="flex flex-wrap items-end gap-4 mb-8 pb-6 border-b border-border">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wide text-foreground mb-1">Check-in</label>
+                <input type="date" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} className="border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary transition-colors text-foreground" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wide text-foreground mb-1">Check-out</label>
+                <input type="date" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} className="border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary transition-colors text-foreground" />
+              </div>
+              <div ref={guestRef} className="relative">
+                <label className="block text-xs font-semibold uppercase tracking-wide text-foreground mb-1">Guests</label>
+                <button
+                  onClick={() => setShowGuestPicker(v => !v)}
+                  className="flex items-center gap-2 border border-border rounded-lg px-3 py-2 text-sm text-foreground hover:border-muted-foreground/50 transition-colors"
+                >
+                  <span>{guestLabel}</span>
+                  <ChevronDown size={14} className={`transition-transform duration-200 ${showGuestPicker ? 'rotate-180' : ''}`} />
+                </button>
+                {showGuestPicker && (
+                  <div className="absolute left-0 top-full mt-1 bg-white border border-border rounded-xl shadow-xl z-50 p-4 min-w-[280px]">
+                    {([
+                      { key: 'adults' as keyof GuestCount, label: 'Adults', sub: 'Ages 13 or above' },
+                      { key: 'children' as keyof GuestCount, label: 'Children', sub: 'Ages 2–12' },
+                      { key: 'infants' as keyof GuestCount, label: 'Infants', sub: 'Under 2' },
+                      { key: 'pets' as keyof GuestCount, label: 'Pets', sub: 'Bringing a service animal?' },
+                    ]).map(({ key, label, sub }) => (
+                      <div key={key} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">{label}</p>
+                          <p className="text-xs text-muted-foreground">{sub}</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => adjustGuest(key, -1)}
+                            disabled={guestCount[key] <= (key === 'adults' ? 1 : 0)}
+                            className="w-7 h-7 rounded-full border-2 border-border flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:border-primary hover:bg-primary/10 transition-all"
+                          >
+                            <Minus size={10} />
+                          </button>
+                          <span className="w-5 text-center text-sm font-bold tabular-nums text-foreground">{guestCount[key]}</span>
+                          <button
+                            onClick={() => adjustGuest(key, 1)}
+                            className="w-7 h-7 rounded-full border-2 border-border flex items-center justify-center hover:border-primary hover:bg-primary/10 transition-all"
+                          >
+                            <Plus size={10} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
-            <p className="text-center text-xs text-muted-foreground mt-4 hover:underline cursor-pointer">Report this listing</p>
+            <div className="space-y-3">
+              {hotel.roomTypes.map((rt) => {
+                const qty = roomQuantities[rt.id] || 0;
+                const lineTotal = qty * rt.price * nights;
+                return (
+                  <div key={rt.id} className="flex items-stretch gap-4 p-4 rounded-xl border border-border hover:border-muted-foreground/30 transition-all">
+                    <div className="flex gap-3 flex-1 min-w-0">
+                      <img src={rt.image} alt={rt.name} className="w-20 h-20 rounded-lg object-cover shrink-0" />
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">{rt.name}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{rt.bedType} · {rt.areaSqFt} sq ft</p>
+                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{rt.description}</p>
+                        <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                          <span className="text-[11px] text-muted-foreground border border-border rounded-full px-2 py-0.5">Up to {rt.maxGuests} guests</span>
+                          {rt.availableRooms > 0 ? (
+                            <span className="text-[11px] text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">{rt.availableRooms} available</span>
+                          ) : (
+                            <span className="text-[11px] text-red-600 bg-red-50 border border-red-200 rounded-full px-2 py-0.5">Sold out</span>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => setDetailRoomId(rt.id)}
+                          className="mt-1.5 text-xs font-medium text-primary underline-offset-2 hover:underline"
+                        >
+                          View detail
+                        </button>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0 flex flex-col justify-center">
+                      <p className="text-sm font-bold text-foreground">${rt.price}</p>
+                      <p className="text-xs text-muted-foreground">/ night</p>
+                    </div>
+                    <div className="shrink-0 flex items-center">
+                      <div className="flex items-center gap-2 border border-border rounded-lg px-2.5 py-1.5">
+                        <button
+                          onClick={() => handleQtyChange(rt.id, -1)}
+                          disabled={qty <= 0}
+                          className="w-7 h-7 rounded-full border border-border flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:border-primary transition-all"
+                        >
+                          <Minus size={10} />
+                        </button>
+                        <span className="w-6 text-center text-sm font-bold tabular-nums text-foreground">{qty}</span>
+                        <button
+                          onClick={() => handleQtyChange(rt.id, 1)}
+                          disabled={qty >= rt.availableRooms}
+                          className="w-7 h-7 rounded-full border border-border flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:border-primary transition-all"
+                        >
+                          <Plus size={10} />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0 flex flex-col justify-center min-w-[70px]">
+                      <p className="text-sm font-bold text-foreground">${lineTotal.toLocaleString()}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {Object.values(roomQuantities).some(q => q > 0) && (
+              <div className="mt-6 pt-6 border-t border-border">
+                <h3 className="text-sm font-semibold text-foreground mb-3">Your selection</h3>
+                <div className="space-y-2">
+                  {Object.entries(roomQuantities).map(([roomId, qty]) => {
+                    if (qty <= 0) return null;
+                    const room = hotel.roomTypes.find(r => r.id === roomId);
+                    if (!room) return null;
+                    const roomTotal = qty * room.price * nights;
+                    return (
+                      <div key={roomId} className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">{room.name} × {qty}</span>
+                        <span className="text-foreground">${roomTotal.toLocaleString()}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex justify-between text-lg font-bold text-foreground mt-4 pt-4 border-t border-border">
+                  <span>Total</span>
+                  <span>${Object.entries(roomQuantities)
+                    .filter(([_, q]) => q > 0)
+                    .reduce((sum, [roomId, qty]) => {
+                      const room = hotel.roomTypes.find(r => r.id === roomId);
+                      return sum + (room ? qty * room.price * nights : 0);
+                    }, 0).toLocaleString()}</span>
+                </div>
+                <button
+                  onClick={() => {
+                    const selected = Object.entries(roomQuantities).filter(([_, q]) => q > 0);
+                    if (selected.length === 0) return;
+                    const params = new URLSearchParams();
+                    if (checkIn) params.set('checkIn', checkIn);
+                    if (checkOut) params.set('checkOut', checkOut);
+                    params.set('adults', String(guestCount.adults));
+                    params.set('children', String(guestCount.children));
+                    params.set('infants', String(guestCount.infants));
+                    params.set('pets', String(guestCount.pets));
+                    params.set('roomTypeId', selected[0][0]);
+                    params.set('rooms', JSON.stringify(Object.fromEntries(selected)));
+                    const query = params.toString();
+                    if (!user) {
+                      navigate('/login?redirect=' + encodeURIComponent('/reserve/' + id + '?' + query));
+                    } else {
+                      navigate('/reserve/' + id + '?' + query);
+                    }
+                  }}
+                  disabled={Object.values(roomQuantities).every(q => q === 0)}
+                  className="w-full mt-4 py-3.5 rounded-xl bg-primary text-white font-semibold text-sm hover:opacity-90 transition-all hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Reserve
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -398,6 +476,78 @@ export default function HotelDetailPage() {
           </section>
         )}
       </div>
+
+      {detailRoomId && (() => {
+        const room = hotel.roomTypes.find(rt => rt.id === detailRoomId);
+        if (!room) return null;
+        return (
+          <div
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => setDetailRoomId(null)}
+          >
+            <div
+              className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+              onClick={e => e.stopPropagation()}
+            >
+              <img src={room.image} alt={room.name} className="w-full h-56 object-cover rounded-t-2xl" />
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <h3 className="text-lg font-bold text-foreground">{room.name}</h3>
+                    <p className="text-sm text-muted-foreground mt-0.5">{room.description}</p>
+                  </div>
+                  <button
+                    onClick={() => setDetailRoomId(null)}
+                    className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-muted transition-colors shrink-0 ml-4"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-4 py-4 border-t border-border">
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">Bed type</p>
+                    <p className="text-sm font-medium text-foreground mt-0.5">{room.bedType}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">Area</p>
+                    <p className="text-sm font-medium text-foreground mt-0.5">{room.areaSqFt} sq ft</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">Max guests</p>
+                    <p className="text-sm font-medium text-foreground mt-0.5">{room.maxGuests}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">Available</p>
+                    <p className="text-sm font-medium text-foreground mt-0.5">{room.availableRooms} of {room.totalRooms} room{room.totalRooms > 1 ? 's' : ''}</p>
+                  </div>
+                </div>
+                {room.roomNumbers.length > 0 && (
+                  <div className="py-4 border-t border-border">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-2">Room numbers</p>
+                    <div className="flex flex-wrap gap-2">
+                      {room.roomNumbers.map(rn => (
+                        <span key={rn} className="px-3 py-1 bg-accent rounded-lg text-xs font-medium text-foreground">{rn}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="pt-4 border-t border-border flex items-center justify-between">
+                  <div>
+                    <p className="text-2xl font-bold text-foreground">${room.price}</p>
+                    <p className="text-xs text-muted-foreground">per night</p>
+                  </div>
+                  <button
+                    onClick={() => setDetailRoomId(null)}
+                    className="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-all"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       <Footer />
     </div>

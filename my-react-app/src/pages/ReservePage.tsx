@@ -1,234 +1,355 @@
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom"
-import { Star, MapPin, ArrowLeft, ShieldCheck, Users, BedDouble, Bath, Building2, CreditCard, Check, Circle } from "lucide-react"
+import { Star, ChevronDown, Plus, Minus, Check, Circle } from "lucide-react"
 import { hotels } from "../data/hotels"
 import { Navbar } from "../components/Navbar"
 import { Footer } from "../components/Footer"
 
-type PaymentMethod = "bank" | "esewa" | "khalti" | "visa" | "paypal"
+type PaymentMethod = "stripe" | "razorpay"
 
-const paymentOptions: { key: PaymentMethod; label: string; sub: string; color: string }[] = [
-  { key: "bank", label: "Bank Transfer", sub: "Nepal Investment Bank · NMB · Prabhu", color: "#1a73e8" },
-  { key: "esewa", label: "eSewa", sub: "Pay via eSewa wallet", color: "#00a651" },
-  { key: "khalti", label: "Khalti", sub: "Pay via Khalti digital wallet", color: "#5a2d82" },
-  { key: "visa", label: "Credit / Debit Card", sub: "Visa · Mastercard · Amex", color: "#1434cb" },
-  { key: "paypal", label: "PayPal", sub: "Pay with your PayPal account", color: "#003087" },
+const paymentOptions: { key: PaymentMethod; label: string; sub: string; logo: JSX.Element }[] = [
+  {
+    key: "stripe",
+    label: "Stripe",
+    sub: "Pay via Credit / Debit Card",
+    logo: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <rect x="2" y="4" width="20" height="16" rx="4" fill="#635bff" />
+        <text x="12" y="16" textAnchor="middle" fontSize="9" fontWeight="bold" fill="white">S</text>
+      </svg>
+    ),
+  },
+  {
+    key: "razorpay",
+    label: "Razorpay",
+    sub: "Pay via UPI, Card, Net Banking & more",
+    logo: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <rect x="2" y="4" width="20" height="16" rx="4" fill="#3399ff" />
+        <text x="12" y="16" textAnchor="middle" fontSize="7" fontWeight="bold" fill="white">R</text>
+      </svg>
+    ),
+  },
 ]
 
-function PaymentIcon({ method, color }: { method: PaymentMethod; color: string }) {
-  switch (method) {
-    case "bank":
-      return <Building2 size={22} style={{ color }} />
-    case "visa":
-      return <CreditCard size={22} style={{ color }} />
-    case "esewa":
-      return (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-          <rect x="2" y="4" width="20" height="16" rx="4" fill={color} />
-          <text x="12" y="16" textAnchor="middle" fontSize="9" fontWeight="bold" fill="white">E</text>
-        </svg>
-      )
-    case "khalti":
-      return (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-          <rect x="2" y="4" width="20" height="16" rx="4" fill={color} />
-          <text x="12" y="16" textAnchor="middle" fontSize="8" fontWeight="bold" fill="white">K</text>
-        </svg>
-      )
-    case "paypal":
-      return (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-          <rect x="2" y="4" width="20" height="16" rx="4" fill={color} />
-          <text x="12" y="16" textAnchor="middle" fontSize="7" fontWeight="bold" fill="white">P</text>
-        </svg>
-      )
-  }
+interface GuestCount {
+  adults: number;
+  children: number;
+  infants: number;
+  pets: number;
 }
 
 export default function ReservePage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const hotel = hotels.find((h) => h.id === Number(id))
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod | null>(null)
-  const [searchParams] = useSearchParams()
-  const resCheckIn = searchParams.get('checkIn') || ''
-  const resCheckOut = searchParams.get('checkOut') || ''
-  const resGuests = Number(searchParams.get('adults')) + Number(searchParams.get('children')) || 1
-  const resInfants = Number(searchParams.get('infants')) || 0
-  const resPets = Number(searchParams.get('pets')) || 0
+  const [showBreakdown, setShowBreakdown] = useState(false)
 
-  const formatDate = (d: string) => d
-    ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-    : ''
+  const resRoomTypeId = searchParams.get('roomTypeId') || ''
+
+  const [checkIn, setCheckIn] = useState(searchParams.get('checkIn') || '')
+  const [checkOut, setCheckOut] = useState(searchParams.get('checkOut') || '')
+  const [guestCount, setGuestCount] = useState<GuestCount>({
+    adults: Number(searchParams.get('adults')) || 1,
+    children: Number(searchParams.get('children')) || 0,
+    infants: Number(searchParams.get('infants')) || 0,
+    pets: Number(searchParams.get('pets')) || 0,
+  })
+  const [showGuestPicker, setShowGuestPicker] = useState(false)
+  const guestRef = useRef<HTMLDivElement>(null)
+  const tripRef = useRef<HTMLDivElement>(null)
+
+  const formatDate = (d: string) => {
+    if (!d) return ''
+    return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  }
+
+  const formatShortDate = (d: string) => {
+    if (!d) return ''
+    return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  }
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (guestRef.current && !guestRef.current.contains(e.target as Node)) {
+        setShowGuestPicker(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
 
   if (!hotel) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
         <p className="text-2xl">🏨</p>
-        <p className="text-lg font-semibold text-foreground">Property not found</p>
-        <Link to="/" className="px-5 py-2.5 bg-primary text-white rounded-full text-sm font-medium hover:opacity-90">
+        <p className="text-lg font-semibold text-[#111827]">Property not found</p>
+        <Link to="/" className="px-5 py-2.5 bg-[#111827] text-white rounded-full text-sm font-medium hover:opacity-90">
           Back to home
         </Link>
       </div>
     )
   }
 
-  const nights = resCheckIn && resCheckOut
-    ? Math.max(1, Math.round((new Date(resCheckOut).getTime() - new Date(resCheckIn).getTime()) / 86400000))
+  const selectedRoom = hotel.roomTypes.find((rt) => rt.id === resRoomTypeId)
+  const currentPrice = selectedRoom?.price ?? hotel.price
+  const maxRoomGuests = selectedRoom?.maxGuests ?? hotel.maxGuests
+  const totalGuests = guestCount.adults + guestCount.children
+
+  const nights = checkIn && checkOut
+    ? Math.max(1, Math.round((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000))
     : 5
-  const subtotal = hotel.price * nights
-  const cleaningFee = Math.round(hotel.price * 0.15)
-  const serviceFee = Math.round(subtotal * 0.12)
-  const total = subtotal + cleaningFee + serviceFee
+  const subtotal = currentPrice * nights
+  const taxesAndFees = Math.round(subtotal * 0.10)
+  const resortFee = Math.round(currentPrice * 0.06)
+  const total = subtotal + taxesAndFees + resortFee
+  const dueToday = subtotal + taxesAndFees
+  const dueAtProperty = resortFee
+
+  const adjustGuest = (key: keyof GuestCount, delta: number) => {
+    setGuestCount(prev => {
+      const min = key === 'adults' ? 1 : 0
+      const next = { ...prev, [key]: Math.max(min, prev[key] + delta) }
+      if (key !== 'pets') {
+        const guestTotal = next.adults + next.children
+        if (guestTotal > maxRoomGuests) return prev
+      }
+      return next
+    })
+  }
 
   return (
-    <div className="min-h-screen bg-background" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+    <div className="min-h-screen bg-[#F9FAFB] pb-8" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       <Navbar />
       <div className="max-w-[1100px] mx-auto px-6 py-8">
-        <button onClick={() => navigate(-1)} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
-          <ArrowLeft size={15} /> Back
+        <button onClick={() => navigate(-1)} className="inline-flex items-center gap-1.5 text-sm text-[#6B7280] hover:text-[#111827] mb-6 transition-colors">
+          <ChevronDown size={15} className="rotate-90" /> Back
         </button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-10">
-          {/* Left side — Payment methods */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-10 items-start">
+          {/* Left — interactive content */}
           <div>
-            <h2 className="text-xl font-bold text-foreground mb-5">Payment Method</h2>
+            {/* Trip details — editable */}
+            <div ref={tripRef} className="bg-white border border-[#E5E7EB] rounded-2xl p-4 mb-5">
+              <h2 className="text-sm font-bold text-[#111827] mb-3">Trip details</h2>
+              <div className="border border-[#E5E7EB] rounded-lg">
+                <div className="grid grid-cols-2 divide-x divide-[#E5E7EB] rounded-t-lg overflow-hidden">
+                  <div className="p-2">
+                    <label className="block text-[10px] font-semibold uppercase tracking-wide text-[#374151] mb-0.5">Check-in</label>
+                    <input type="date" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} className="w-full text-xs bg-transparent outline-none text-[#111827]" />
+                  </div>
+                  <div className="p-2">
+                    <label className="block text-[10px] font-semibold uppercase tracking-wide text-[#374151] mb-0.5">Checkout</label>
+                    <input type="date" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} className="w-full text-xs bg-transparent outline-none text-[#111827]" />
+                  </div>
+                </div>
+                <div ref={guestRef} className="border-t border-[#E5E7EB] p-2 relative rounded-b-lg">
+                  <label className="block text-[10px] font-semibold uppercase tracking-wide text-[#374151] mb-0.5">Guests</label>
+                  <button
+                    onClick={() => setShowGuestPicker(v => !v)}
+                    className="flex items-center justify-between w-full text-xs text-[#111827]"
+                  >
+                    <span>{totalGuests} guest{totalGuests !== 1 ? 's' : ''}{guestCount.infants > 0 ? `, ${guestCount.infants} infant${guestCount.infants > 1 ? 's' : ''}` : ''}{guestCount.pets > 0 ? `, ${guestCount.pets} pet${guestCount.pets > 1 ? 's' : ''}` : ''}</span>
+                    <ChevronDown size={12} className={`transition-transform duration-200 ${showGuestPicker ? 'rotate-180' : ''}`} />
+                  </button>
+                  {showGuestPicker && (
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-[#E5E7EB] rounded-lg shadow-xl z-50 p-3">
+                      {([
+                        { key: 'adults' as keyof GuestCount, label: 'Adults', sub: 'Ages 13 or above' },
+                        { key: 'children' as keyof GuestCount, label: 'Children', sub: 'Ages 2–12' },
+                        { key: 'infants' as keyof GuestCount, label: 'Infants', sub: 'Under 2' },
+                        { key: 'pets' as keyof GuestCount, label: 'Pets', sub: 'Bringing a service animal?' },
+                      ]).map(({ key, label, sub }) => (
+                        <div key={key} className="flex items-center justify-between py-2 border-b border-[#E5E7EB] last:border-0">
+                          <div>
+                            <p className="text-xs font-semibold text-[#111827]">{label}</p>
+                            <p className="text-[11px] text-[#6B7280]">{sub}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => adjustGuest(key, -1)}
+                              disabled={guestCount[key] <= (key === 'adults' ? 1 : 0)}
+                              className="w-6 h-6 rounded-full border-2 border-[#E5E7EB] flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:border-[#111827] hover:bg-[#F3F4F6] transition-all"
+                            >
+                              <Minus size={8} />
+                            </button>
+                            <span className="w-4 text-center text-xs font-bold tabular-nums text-[#111827]">{guestCount[key]}</span>
+                            <button
+                              onClick={() => adjustGuest(key, 1)}
+                              className="w-6 h-6 rounded-full border-2 border-[#E5E7EB] flex items-center justify-center hover:border-[#111827] hover:bg-[#F3F4F6] transition-all"
+                            >
+                              <Plus size={8} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+
+            {/* Payment Method */}
+            <h2 className="text-xl font-bold text-[#111827] mb-5">Payment Method</h2>
             <div className="space-y-3">
-              {paymentOptions.map(({ key, label, sub, color }) => (
+              {paymentOptions.map(({ key, label, sub, logo }) => (
                 <button
                   key={key}
                   onClick={() => setSelectedPayment(key)}
                   className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left ${
                     selectedPayment === key
-                      ? "border-primary bg-primary/5 shadow-md"
-                      : "border-border hover:border-muted-foreground/30 hover:bg-accent/50"
+                      ? "border-[#111827] bg-[#F9FAFB] shadow-md"
+                      : "border-[#E5E7EB] hover:border-[#9CA3AF] hover:bg-[#F3F4F6]"
                   }`}
                 >
-                  <PaymentIcon method={key} color={color} />
+                  {logo}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground">{label}</p>
-                    <p className="text-xs text-muted-foreground truncate">{sub}</p>
+                    <p className="text-sm font-semibold text-[#111827]">{label}</p>
+                    <p className="text-xs text-[#6B7280] truncate">{sub}</p>
                   </div>
                   {selectedPayment === key ? (
-                    <span className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                    <span className="w-5 h-5 rounded-full bg-[#111827] flex items-center justify-center">
                       <Check size={12} className="text-white" />
                     </span>
                   ) : (
-                    <Circle size={18} className="text-muted-foreground/40" />
+                    <Circle size={18} className="text-[#9CA3AF]" />
                   )}
                 </button>
               ))}
             </div>
 
             {selectedPayment && (
-              <div className="mt-6 p-5 bg-white border border-border rounded-xl animate-slide-down">
-                <p className="text-sm font-semibold text-foreground mb-3">
-                  {selectedPayment === "bank" && "Bank Transfer Details"}
-                  {selectedPayment === "esewa" && "eSewa Payment"}
-                  {selectedPayment === "khalti" && "Khalti Payment"}
-                  {selectedPayment === "visa" && "Card Details"}
-                  {selectedPayment === "paypal" && "PayPal Payment"}
+              <div className="mt-6 p-5 bg-white border border-[#E5E7EB] rounded-xl">
+                <p className="text-sm font-semibold text-[#111827] mb-3">
+                  {selectedPayment === "stripe" && "Pay with Stripe"}
+                  {selectedPayment === "razorpay" && "Pay with Razorpay"}
                 </p>
-                {selectedPayment === "bank" && (
-                  <div className="space-y-2 text-sm text-muted-foreground">
-                    <p>Account: <strong className="text-foreground">StayEasy Pvt. Ltd.</strong></p>
-                    <p>Bank: <strong className="text-foreground">Nepal Investment Bank</strong></p>
-                    <p>Account No: <strong className="text-foreground">1234 5678 9012</strong></p>
-                    <p>Branch: <strong className="text-foreground">Kamaladi, Kathmandu</strong></p>
+                <div className="space-y-3">
+                  <input type="text" placeholder="Card number" className="w-full border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#111827] transition-colors text-[#111827]" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <input type="text" placeholder="MM/YY" className="border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#111827] transition-colors text-[#111827]" />
+                    <input type="text" placeholder="CVC" className="border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#111827] transition-colors text-[#111827]" />
                   </div>
-                )}
-                {selectedPayment === "visa" && (
-                  <div className="space-y-3">
-                    <input type="text" placeholder="Card number" className="w-full border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary transition-colors text-foreground" />
-                    <div className="grid grid-cols-2 gap-3">
-                      <input type="text" placeholder="MM/YY" className="border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary transition-colors text-foreground" />
-                      <input type="text" placeholder="CVC" className="border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary transition-colors text-foreground" />
-                    </div>
-                    <input type="text" placeholder="Cardholder name" className="w-full border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary transition-colors text-foreground" />
-                  </div>
-                )}
-                {(selectedPayment === "esewa" || selectedPayment === "khalti" || selectedPayment === "paypal") && (
-                  <p className="text-sm text-muted-foreground">You will be redirected to the payment gateway to complete this transaction.</p>
+                  <input type="text" placeholder="Cardholder name" className="w-full border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#111827] transition-colors text-[#111827]" />
+                </div>
+                {selectedPayment === "razorpay" && (
+                  <p className="text-xs text-[#6B7280] mt-3">Razorpay also supports UPI, Net Banking, and Wallets.</p>
                 )}
               </div>
             )}
           </div>
 
-          {/* Right side — Booking summary */}
+          {/* Right — Booking Summary Card */}
           <div className="lg:sticky lg:top-24 self-start">
-            <div className="border border-border rounded-2xl shadow-xl p-6 bg-white">
-              <div className="flex gap-4 mb-5 pb-5 border-b border-border">
-                <img src={hotel.images[0]} alt={hotel.name} className="w-20 h-20 rounded-lg object-cover shrink-0" />
-                <div className="min-w-0">
-                  <h3 className="font-semibold text-foreground truncate">{hotel.name}</h3>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                    <MapPin size={10} /> {hotel.location}
-                  </p>
-                  <div className="flex items-center gap-1 mt-1">
-                    <Star size={11} className="fill-foreground stroke-foreground" />
-                    <span className="text-xs font-semibold text-foreground">{hotel.rating}</span>
-                    <span className="text-xs text-muted-foreground">({hotel.reviews})</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                    <span><BedDouble size={10} className="inline" /> {hotel.bedrooms} bed</span>
-                    <span><Bath size={10} className="inline" /> {hotel.bathrooms} bath</span>
-                    <span><Users size={10} className="inline" /> {hotel.maxGuests} guests</span>
+            <div className="bg-white border border-[#E5E7EB] rounded-[20px] p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+              {/* 1. Hotel Information */}
+              <div className="pb-[18px] border-b border-[#E5E7EB]">
+                <div className="flex gap-4">
+                  <img src={hotel.images[0]} alt={hotel.name} className="w-16 h-16 rounded-[10px] object-cover shrink-0" />
+                  <div className="flex flex-col gap-[4px] min-w-0">
+                    <h3 className="text-lg font-bold text-[#111827] truncate leading-tight">{hotel.name} – {hotel.city}</h3>
+                    <p className="text-[13px] text-[#6B7280]">{selectedRoom?.name || hotel.category}</p>
+                    <div className="flex items-center gap-1">
+                      <Star size={11} className="fill-[#111827] stroke-[#111827]" />
+                      <span className="text-[13px] font-medium text-[#111827]">{hotel.rating}</span>
+                      <span className="text-[13px] text-[#6B7280]">({hotel.reviews})</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-3 mb-5 pb-5 border-b border-border">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">Check-in</p>
-                    <p className="text-sm font-medium text-foreground">{formatDate(resCheckIn) || '—'}</p>
+              {/* 2. Cancellation Policy */}
+              <div className="py-[18px] border-b border-[#E5E7EB]">
+                <p className="text-[13px] text-[#4B5563] leading-5">
+                  Cancel before check-in on {checkIn ? formatDate(checkIn) : 'check-in date'} for a partial refund.
+                </p>
+                <button className="text-[13px] font-medium text-[#111827] underline mt-1 cursor-pointer">Full policy</button>
+              </div>
+
+              {/* 3. Dates */}
+              <div className="py-[18px] border-b border-[#E5E7EB]">
+                <span className="text-[13px] font-medium text-[#374151]">Dates</span>
+                <p className="text-[14px] text-[#111827] mt-1">
+                  {checkIn && checkOut
+                    ? `${formatShortDate(checkIn)} – ${formatShortDate(checkOut)}, ${new Date(checkOut).getFullYear()}`
+                    : 'Select dates'}
+                </p>
+              </div>
+
+              {/* 4. Guests */}
+              <div className="py-[18px] border-b border-[#E5E7EB]">
+                <span className="text-[13px] font-medium text-[#374151]">Guests</span>
+                <p className="text-[14px] text-[#111827] mt-1">{totalGuests} guest{totalGuests !== 1 ? 's' : ''}</p>
+              </div>
+
+              {/* 5. Location */}
+              <div className="py-[18px] border-b border-[#E5E7EB]">
+                <p className="text-[13px] font-medium text-[#374151] mb-1">Location</p>
+                <p className="text-[14px] text-[#4B5563]">{hotel.location}</p>
+                <p className="text-[14px] text-[#4B5563]">{hotel.city}, {hotel.country}</p>
+              </div>
+
+              {/* 6. Price Details */}
+              <div className="py-[18px] border-b border-[#E5E7EB]">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[14px] font-semibold text-[#111827]">Price details</p>
+                  <button
+                    onClick={() => setShowBreakdown(v => !v)}
+                    className="text-[13px] font-medium text-[#111827] underline cursor-pointer"
+                  >
+                    {showBreakdown ? 'Hide breakdown' : 'Price breakdown'}
+                  </button>
+                </div>
+                <div className="flex justify-between items-center text-[14px]">
+                  <span className="text-[#4B5563]">${currentPrice} × {nights} night{nights > 1 ? 's' : ''}</span>
+                  <span className="text-[#111827]">${subtotal.toFixed(2)}</span>
+                </div>
+                {showBreakdown && (
+                  <div className="mt-3 space-y-[10px] pt-3 border-t border-[#E5E7EB]">
+                    <div className="flex justify-between items-center text-[14px]">
+                      <span className="text-[#4B5563]">Taxes and fees</span>
+                      <span className="text-[#111827]">${taxesAndFees.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-[14px]">
+                      <span className="text-[#4B5563]">Resort fee</span>
+                      <span className="text-[#111827]">${resortFee.toFixed(2)}</span>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">Checkout</p>
-                    <p className="text-sm font-medium text-foreground">{formatDate(resCheckOut) || '—'}</p>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">Guests</p>
-                  <p className="text-sm font-medium text-foreground">{resGuests} guest{resGuests > 1 ? 's' : ''}{resInfants > 0 ? `, ${resInfants} infant${resInfants > 1 ? 's' : ''}` : ''}{resPets > 0 ? `, ${resPets} pet${resPets > 1 ? 's' : ''}` : ''}</p>
+                )}
+              </div>
+
+              {/* 7. Total */}
+              <div className="py-[18px] border-b border-[#E5E7EB]">
+                <div className="flex justify-between items-center">
+                  <span className="text-base font-bold text-[#111827]">Total USD</span>
+                  <span className="text-base font-bold text-[#111827]">${total.toFixed(2)}</span>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2 text-sm mb-5 pb-5 border-b border-border">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">${hotel.price} × {nights} night{nights > 1 ? 's' : ''}</span>
-                  <span className="text-foreground">${subtotal.toLocaleString()}</span>
+              {/* 8. Due Today */}
+              <div className="pt-[18px]">
+                <div className="flex justify-between items-center">
+                  <span className="text-[15px] font-semibold text-[#111827]">Due today</span>
+                  <span className="text-[15px] font-semibold text-[#111827]">${dueToday.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Cleaning fee</span>
-                  <span className="text-foreground">${cleaningFee}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Service fee</span>
-                  <span className="text-foreground">${serviceFee}</span>
+                <div className="flex justify-between items-center mt-1">
+                  <span className="text-[13px] text-[#6B7280]">Due to host at property</span>
+                  <span className="text-[13px] text-[#6B7280]">${dueAtProperty.toFixed(2)}</span>
                 </div>
               </div>
-
-              <div className="flex justify-between font-semibold text-foreground text-base mb-5">
-                <span>Total</span>
-                <span>${total.toLocaleString()}</span>
-              </div>
-
-              <button
-                disabled={!selectedPayment}
-                className="w-full py-3.5 rounded-xl bg-primary text-white font-semibold text-sm hover:opacity-90 transition-all hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {selectedPayment ? "Confirm reservation" : "Select a payment method"}
-              </button>
-              <p className="text-center text-xs text-muted-foreground mt-3">You won't be charged yet</p>
             </div>
 
-            {hotel.isSuperhost && (
-              <div className="flex items-center gap-2 text-sm text-foreground bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 mt-4">
-                <ShieldCheck size={16} className="text-primary shrink-0" />
-                <span>Hosted by a <strong>Verified Host</strong></span>
-              </div>
-            )}
+            {/* Confirm button below card */}
+            <button
+              disabled={!selectedPayment}
+              className="w-full mt-6 py-3.5 rounded-xl bg-[#111827] text-white font-semibold text-sm hover:bg-black transition-all disabled:bg-[#D1D5DB] disabled:cursor-not-allowed"
+            >
+              {selectedPayment ? "Confirm reservation" : "Select a payment method"}
+            </button>
+            <p className="text-center text-xs text-[#6B7280] mt-3">You won't be charged yet</p>
           </div>
         </div>
       </div>

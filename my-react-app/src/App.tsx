@@ -9,6 +9,7 @@ import HostPortalPage from './pages/HostPortalPage'
 import CountryPage from './pages/CountryPage'
 import HotelDetailPage from './pages/HotelDetailPage'
 import ReservePage from './pages/ReservePage'
+import RoomSelectPage from './pages/RoomSelectPage'
 function App() {
   return (
     <BrowserRouter>
@@ -24,6 +25,7 @@ function App() {
         <Route path="/country/:code" element={<CountryPage />} />
         <Route path="/hotel/:id" element={<HotelDetailPage />} />
         <Route path="/reserve/:id" element={<ReservePage />} />
+        <Route path="/select-room/:id" element={<RoomSelectPage />} />
       </Routes>
     </BrowserRouter>
   )
