@@ -12,8 +12,7 @@ export default function RoomSelectPage() {
   const resCheckOut = searchParams.get('checkOut') || ''
   const resAdults = Number(searchParams.get('adults')) || 1
   const resChildren = Number(searchParams.get('children')) || 0
-  const resInfants = Number(searchParams.get('infants')) || 0
-  const resPets = Number(searchParams.get('pets')) || 0
+
 
   const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
@@ -59,11 +58,9 @@ export default function RoomSelectPage() {
     const params = new URLSearchParams()
     if (resCheckIn) params.set('checkIn', resCheckIn)
     if (resCheckOut) params.set('checkOut', resCheckOut)
-    params.set('adults', String(resAdults))
-    params.set('children', String(resChildren))
-    params.set('infants', String(resInfants))
-    params.set('pets', String(resPets))
-    params.set('roomTypeId', selectedType.id)
+    const roomGuestCount = resAdults + resChildren
+    params.set('rooms', JSON.stringify({ [selectedType.id]: 1 }))
+    params.set('guestCounts', JSON.stringify({ [selectedType.id]: roomGuestCount }))
     const query = params.toString()
     navigate('/reserve/' + id + '?' + query)
   }
