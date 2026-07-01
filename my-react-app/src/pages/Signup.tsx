@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { AxiosError } from 'axios'
 import { Eye, EyeOff } from 'lucide-react'
@@ -18,18 +18,11 @@ function extractError(err: unknown, fallback = 'Could not create account. Please
   }
   return fallback
 }
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import axios from 'axios'
-import BuildingScene from '../components/BuildingScene'
-import api from '../api'
-import toast from 'react-hot-toast'
-
 export default function Signup() {
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams] = useSearchParams()
   const isHost = location.pathname.startsWith('/host') || searchParams.get('host') === 'true'
-  const isHost = searchParams.get('host') === 'true'
 
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
@@ -78,12 +71,7 @@ export default function Signup() {
       toast.success('Verification code sent to your email')
       setShowOtpStep(true)
     } catch (err) {
-      setError(extractError(err))
-      
-      toast.success('Verification code sent to your email')
-      setShowOtpStep(true)
-    } catch (err) {
-      const isAxiosError = axios.isAxiosError(err)
+      const isAxiosError = err instanceof AxiosError
       const status = isAxiosError ? err.response?.status : undefined
       const detail = isAxiosError
         ? err.response?.data?.detail || err.response?.data?.message || ''
@@ -110,8 +98,6 @@ export default function Signup() {
       toast.success('Account verified successfully!')
     } catch (err) {
       setError(extractError(err, 'Invalid verification code. Please try again.'))
-    } catch {
-      setError('Invalid verification code. Please try again.')
     } finally {
       setOtpLoading(false)
     }
@@ -154,7 +140,7 @@ export default function Signup() {
           boxShadow: '0 8px 40px rgba(0,0,0,0.13)',
         }}
       >
-        {/* Form panel — on the LEFT for sign up */}
+        {/* Form panel â€” on the LEFT for sign up */}
         <div
           className="custom-scroll"
           style={{
@@ -207,16 +193,11 @@ export default function Signup() {
               <div style={{ fontSize: 20, fontWeight: 700, color: '#111', marginBottom: 2 }}>
                 {isHost ? 'Become a Host' : 'Create account'}
               </div>
-              <div style={{ fontSize: 12, color: '#999', marginBottom: 12 }}>
-              <div style={{ fontSize: 20, fontWeight: 700, color: '#111', marginBottom: 3 }}>
-                {isHost ? 'Become a Host' : 'Create account'}
-              </div>
               <div style={{ fontSize: 12, color: '#999', marginBottom: 20 }}>
                 {isHost ? 'Start listing your property today' : 'Start finding your stay today'}
               </div>
 
               {/* Full name */}
-              <div style={{ marginBottom: 7 }}>
               <div style={{ marginBottom: 13 }}>
                 <label
                   style={{
@@ -241,7 +222,6 @@ export default function Signup() {
               </div>
 
               {/* Phone */}
-              <div style={{ position: 'relative', marginBottom: 7 }}>
               <div style={{ position: 'relative', marginBottom: 13 }}>
                 <label
                   style={{
@@ -266,7 +246,6 @@ export default function Signup() {
               </div>
 
               {/* Email */}
-              <div style={{ position: 'relative', marginBottom: 7 }}>
               <div style={{ position: 'relative', marginBottom: 13 }}>
                 <label
                   style={{
@@ -291,7 +270,6 @@ export default function Signup() {
               </div>
 
               {/* Password */}
-              <div style={{ position: 'relative', marginBottom: 7 }}>
               <div style={{ position: 'relative', marginBottom: 13 }}>
                 <label
                   style={{
@@ -307,7 +285,7 @@ export default function Signup() {
                   onChange={e => setPassword(e.target.value)}
                   onFocus={() => setPwFocused(true)}
                   onBlur={() => setPwFocused(false)}
-                  placeholder="••••••••"
+                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                   autoComplete="off"
                   style={{
                     width: '100%', border: 'none', borderBottom: '1.5px solid #ddd',
@@ -326,17 +304,13 @@ export default function Signup() {
                   {showPw ? <Eye size={15} /> : <EyeOff size={15} />}
                 </button>
               </div>
-              <div style={{ fontSize: 11, color: '#bbb', marginTop: 0, marginBottom: 6 }}>
-                  👁
-                </button>
-              </div>
+
               <div style={{ fontSize: 11, color: '#bbb', marginTop: -8, marginBottom: 13 }}>
                 Must be 8+ characters with a number and a special character.
               </div>
 
               {error && (
                 <p style={{ color: '#e94560', fontSize: 12, marginBottom: 6 }}>{error}</p>
-                <p style={{ color: '#e94560', fontSize: 12, marginBottom: 10 }}>{error}</p>
               )}
 
               <button
@@ -345,21 +319,16 @@ export default function Signup() {
                 style={{
                   width: '100%', padding: 11, background: '#111', border: 'none', borderRadius: 8,
                   color: '#fff', fontSize: 14, fontWeight: 600, cursor: loading ? 'default' : 'pointer',
-                  marginTop: 0, opacity: loading ? 0.7 : 1,
                   marginTop: 2, opacity: loading ? 0.7 : 1,
                 }}
               >
                 {loading ? 'Creating account...' : 'Create Account'}
               </button>
 
-              <div style={{ textAlign: 'center', marginTop: 12, fontSize: 12, color: '#aaa' }}>
-                Already have an account?{' '}
-                <span
-                  onClick={() => navigate(isHost ? '/host/login' : '/login')}
               <div style={{ textAlign: 'center', marginTop: 11, fontSize: 12, color: '#aaa' }}>
                 Already have an account?{' '}
                 <span
-                  onClick={() => navigate(isHost ? '/login?host=true' : '/login')}
+                  onClick={() => navigate(isHost ? '/host/login' : '/login')}
                   style={{ color: '#111', fontWeight: 600, cursor: 'pointer' }}
                 >
                   Log in
@@ -418,7 +387,6 @@ export default function Signup() {
                     {otpLoading ? 'Verifying...' : 'Verify OTP'}
                   </button>
 
-                  <div style={{ textAlign: 'center', marginTop: 6, fontSize: 12, color: '#aaa' }}>
                   <div style={{ textAlign: 'center', marginTop: 11, fontSize: 12, color: '#aaa' }}>
                     Didn't receive the code?{' '}
                     <span
@@ -436,7 +404,7 @@ export default function Signup() {
               ) : (
                 <>
                   <div style={{ textAlign: 'center', marginBottom: 20 }}>
-                    <div style={{ fontSize: 40, marginBottom: 10 }}>✓</div>
+                    <div style={{ fontSize: 40, marginBottom: 10 }}>âœ“</div>
                     <p style={{ fontSize: 13, color: '#1E8449', fontWeight: 600 }}>
                       Email verified successfully!
                     </p>
@@ -444,7 +412,6 @@ export default function Signup() {
 
                   <button
                     onClick={() => navigate(isHost ? '/host/login' : '/login')}
-                    onClick={() => navigate(isHost ? '/login?host=true' : '/login')}
                     style={{
                       width: '100%', padding: 11, background: '#111', border: 'none', borderRadius: 8,
                       color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer',
@@ -459,7 +426,7 @@ export default function Signup() {
           )}
         </div>
 
-        {/* Animated scene panel — on the RIGHT for sign up */}
+        {/* Animated scene panel â€” on the RIGHT for sign up */}
         <div style={{ width: '50%', background: '#dde0ee', order: 2, flexShrink: 0 }}>
           <BuildingScene mode="signup" passwordFocused={pwFocused} passwordVisible={showPw} />
         </div>
@@ -467,3 +434,4 @@ export default function Signup() {
     </div>
   )
 }
+

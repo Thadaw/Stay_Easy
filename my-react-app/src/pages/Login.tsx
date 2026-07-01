@@ -2,22 +2,11 @@ import { useState } from 'react'
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { AxiosError } from 'axios'
 import { Eye, EyeOff } from 'lucide-react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import axios from 'axios'
 import BuildingScene from '../components/BuildingScene'
 import api from '../api'
 import { useAuth } from '../context/AuthContext'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-function extractError(err: unknown): string {
-  if (err instanceof AxiosError && err.response?.data) {
-    const data = err.response.data as Record<string, unknown>
-    if (typeof data.detail === 'string') return data.detail
-    if (typeof data.message === 'string') return data.message
-  }
-  return 'Invalid email or password.'
-}
 
 export default function Login() {
   const navigate = useNavigate()
@@ -25,8 +14,6 @@ export default function Login() {
   const [searchParams] = useSearchParams()
   const isHost = location.pathname.startsWith('/host') || searchParams.get('host') === 'true'
   const { login } = useAuth()
-  const [searchParams] = useSearchParams()
-  const isHost = searchParams.get('host') === 'true'
   const redirect = searchParams.get('redirect') || (isHost ? '/become-a-host' : '/')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -67,15 +54,11 @@ export default function Login() {
       const res = await api.post('/auth/users/login', params, {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       })
-      localStorage.setItem('token', res.data.access_token)
-      setTimeout(() => navigate('/host/tenant-setup'), 1700)
-    } catch (err) {
-      setError(extractError(err))
-      const res = await api.post('/auth/users/login', params)
       await login(res.data.access_token)
+      localStorage.setItem('token', res.data.access_token)
       setTimeout(() => navigate(redirect), 1700)
     } catch (err) {
-      const isAxiosError = axios.isAxiosError(err)
+      const isAxiosError = err instanceof AxiosError
       const status = isAxiosError ? err.response?.status : undefined
       const detail = isAxiosError ? err.response?.data?.detail || '' : ''
       if (status === 404) {
@@ -156,8 +139,7 @@ export default function Login() {
               Login
             </div>
             <div
-              onClick={() => navigate(isHost ? '/host/signup' : '/signup')}
-              onClick={() => navigate(isHost ? '/signup?host=true' : redirect ? `/signup?redirect=${encodeURIComponent(redirect)}` : '/signup')}
+              onClick={() => navigate(isHost ? '/host/signup' : redirect ? `/signup?redirect=${encodeURIComponent(redirect)}` : '/signup')}
               style={{
                 padding: '3px 0',
                 fontSize: 11,
@@ -312,8 +294,7 @@ export default function Login() {
           <div style={{ textAlign: 'center', marginTop: 11, fontSize: 12, color: '#aaa' }}>
             Don't have an account?{' '}
             <span
-              onClick={() => navigate(isHost ? '/host/signup' : '/signup')}
-              onClick={() => navigate(isHost ? '/signup?host=true' : redirect ? `/signup?redirect=${encodeURIComponent(redirect)}` : '/signup')}
+              onClick={() => navigate(isHost ? '/host/signup' : redirect ? `/signup?redirect=${encodeURIComponent(redirect)}` : '/signup')}
               style={{ color: '#111', fontWeight: 600, cursor: 'pointer' }}
             >
               Sign up
