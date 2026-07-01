@@ -1,42 +1,67 @@
 import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
+import { AxiosError } from 'axios'
+import { Eye, EyeOff } from 'lucide-react'
 import BuildingScene from '../components/BuildingScene'
 import api from '../api'
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function extractError(err: unknown): string {
+  if (err instanceof AxiosError && err.response?.data) {
+    const data = err.response.data as Record<string, unknown>
+    if (typeof data.detail === 'string') return data.detail
+    if (typeof data.message === 'string') return data.message
+  }
+  return 'Invalid email or password.'
+}
+
 export default function Login() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
-  const isHost = searchParams.get('host') === 'true'
+  const isHost = location.pathname.startsWith('/host') || searchParams.get('host') === 'true'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [showPw, setShowPw] = useState(false)
+  const [showPw, setShowPw] = useState(true)
   const [pwFocused, setPwFocused] = useState(false)
   const [remember, setRemember] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // true once the businessman should be triggered to walk in
+
   const [loginClicked, setLoginClicked] = useState(false)
 
   const fieldsReady = email.trim().length > 0 && password.trim().length > 0
 
   const handleLogin = async () => {
     setError('')
-    setLoading(true)
-    setLoginClicked(true) // kick off the door animation immediately
+    setLoginClicked(true)
 
+    if (!isHost) {
+      setError('Coming soon')
+      setLoginClicked(false)
+      return
+    }
+
+    if (!email.trim()) { setError('Email is required.'); setLoginClicked(false); return }
+    if (!password.trim()) { setError('Password is required.'); setLoginClicked(false); return }
+    if (!EMAIL_RE.test(email)) { setError('Please enter a valid email address.'); setLoginClicked(false); return }
+
+    setLoading(true)
     try {
-      const form = new FormData()
-      form.append('username', email)
-      form.append('password', password)
-      const res = await api.post('/api/v1/auth/users/login', form, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      const params = new URLSearchParams()
+      params.append('grant_type', 'password')
+      params.append('username', email)
+      params.append('password', password)
+      const res = await api.post('/auth/users/login', params, {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       })
       localStorage.setItem('token', res.data.access_token)
-      setTimeout(() => navigate(isHost ? '/host/portal' : '/'), 1700)
-    } catch {
-      setError('Invalid email or password.')
-      setLoginClicked(false) // let him walk back out if login failed
+      setTimeout(() => navigate('/host/tenant-setup'), 1700)
+    } catch (err) {
+      setError(extractError(err))
+      setLoginClicked(false)
       setLoading(false)
     }
   }
@@ -83,7 +108,7 @@ export default function Login() {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            padding: '36px 32px',
+            padding: '36px 32px 42px',
             order: 2,
             flexShrink: 0,
           }}
@@ -105,7 +130,7 @@ export default function Login() {
               Login
             </div>
             <div
-              onClick={() => navigate(isHost ? '/signup?host=true' : '/signup')}
+              onClick={() => navigate(isHost ? '/host/signup' : '/signup')}
               style={{
                 padding: '3px 0',
                 fontSize: 11,
@@ -147,7 +172,7 @@ export default function Login() {
               value={email}
               onChange={e => setEmail(e.target.value)}
               onFocus={() => setPwFocused(false)}
-              placeholder="you@example.com"
+              placeholder="Enter your email"
               autoComplete="off"
               style={{
                 width: '100%',
@@ -182,7 +207,7 @@ export default function Login() {
               onChange={e => setPassword(e.target.value)}
               onFocus={() => setPwFocused(true)}
               onBlur={() => setPwFocused(false)}
-              placeholder="••••••••"
+              placeholder="Set your password"
               autoComplete="off"
               style={{
                 width: '100%',
@@ -212,7 +237,7 @@ export default function Login() {
                 padding: 0,
               }}
             >
-              👁
+              {showPw ? <Eye size={15} /> : <EyeOff size={15} />}
             </button>
           </div>
 
@@ -260,7 +285,7 @@ export default function Login() {
           <div style={{ textAlign: 'center', marginTop: 11, fontSize: 12, color: '#aaa' }}>
             Don't have an account?{' '}
             <span
-              onClick={() => navigate(isHost ? '/signup?host=true' : '/signup')}
+              onClick={() => navigate(isHost ? '/host/signup' : '/signup')}
               style={{ color: '#111', fontWeight: 600, cursor: 'pointer' }}
             >
               Sign up

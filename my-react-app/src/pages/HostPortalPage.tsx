@@ -3,6 +3,8 @@ import { useNavigate, Link } from "react-router";
 import { Logo } from "../components/Logo";
 
 import { useAuth } from "../context/AuthContext";
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 import {
   Eye,
   EyeOff,
@@ -67,14 +69,14 @@ const propertyTypes = [
 export default function HostPortalPage() {
   const navigate = useNavigate();
   const { credentialLogin, signup: authSignup, user } = useAuth();
-  const [step, setStep] = useState<Step>(user ? "property" : "auth");
+  const [step, setStep] = useState<Step>("auth");
   const [isLogin, setIsLogin] = useState(false);
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (user && step === "auth") setStep("property");
+    if (user && step === "auth") navigate('/host/tenant-setup', { replace: true });
   }, [user]);
 
   // Auth — sign up fields
@@ -116,11 +118,15 @@ export default function HostPortalPage() {
         setError("Please enter your email and password.");
         return;
       }
+      if (!EMAIL_RE.test(loginEmail)) {
+        setError("Please enter a valid email address.");
+        return;
+      }
       setLoading(true);
-      const ok = await credentialLogin(loginEmail, loginPassword);
+      const result = await credentialLogin(loginEmail, loginPassword);
       setLoading(false);
-      if (ok) setStep("property");
-      else setError("Incorrect email or password.");
+      if (result.success) navigate('/host/tenant-setup');
+      else setError(result.error || "Incorrect email or password.");
     } else {
       if (!firstName.trim()) {
         setError("First name is required.");
@@ -148,13 +154,13 @@ export default function HostPortalPage() {
       }
       setLoading(true);
       const fullName = `${firstName.trim()} ${lastName.trim()}`;
-      const ok = await authSignup(fullName, email, password);
+      const result = await authSignup(fullName, email, password);
       setLoading(false);
-      if (ok) {
+      if (result.success) {
         navigate('/host/login');
         return;
       }
-      setError("Could not create account. Please try again.");
+      setError(result.error || "Could not create account. Please try again.");
     }
   }
 
