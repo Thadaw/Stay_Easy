@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Search, ChevronDown, LogOut, User, Settings, Bell, Globe, MapPin, Plus, Minus } from "lucide-react";
+import { Search, ChevronDown, LogOut, User, MapPin, Plus, Minus, Calendar, Heart } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { CountryCurrencyPicker } from "./CountryCurrencyPicker";
 import { useAuth } from "../context/AuthContext";
@@ -372,18 +372,28 @@ export function Navbar() {
                       </div>
                     </div>
                     <div className="py-1">
-                      <button onClick={() => { navigate("/profile"); setMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-accent" style={{ color: "var(--foreground)" }}>
-                        <User size={15} style={{ color: "var(--primary)" }} />Profile
-                      </button>
-                      <button onClick={() => { navigate("/notifications"); setMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-accent" style={{ color: "var(--foreground)" }}>
-                        <Bell size={15} style={{ color: "var(--muted-foreground)" }} />Notifications
-                      </button>
-                      <button onClick={() => { navigate("/account-settings"); setMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-accent" style={{ color: "var(--foreground)" }}>
-                        <Settings size={15} style={{ color: "var(--muted-foreground)" }} />Account Settings
-                      </button>
-                      <button onClick={() => { navigate("/language-currency"); setMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-accent" style={{ color: "var(--foreground)" }}>
-                        <Globe size={15} style={{ color: "var(--muted-foreground)" }} />Language & Currency
-                      </button>
+                      {(() => {
+                        const ut = localStorage.getItem('userType') || 'guest'
+                        return ut === 'guest' ? (
+                          <>
+                            <button onClick={() => { navigate("/profile"); setMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-accent" style={{ color: "var(--foreground)" }}>
+                              <User size={15} style={{ color: "var(--primary)" }} />Profile
+                            </button>
+                            <button onClick={() => { navigate("/my-bookings"); setMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-accent" style={{ color: "var(--foreground)" }}>
+                              <Calendar size={15} style={{ color: "var(--muted-foreground)" }} />My Booking
+                            </button>
+                            <button onClick={() => { navigate("/my-wishlist"); setMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-accent" style={{ color: "var(--foreground)" }}>
+                              <Heart size={15} style={{ color: "var(--muted-foreground)" }} />My Wishlist
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button onClick={() => { navigate("/profile"); setMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-accent" style={{ color: "var(--foreground)" }}>
+                              <User size={15} style={{ color: "var(--primary)" }} />Profile
+                            </button>
+                          </>
+                        )
+                      })()}
                       <div className="my-1 border-t" style={{ borderColor: "var(--border)" }} />
                       <button onClick={() => { logout(); navigate("/"); setMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-accent" style={{ color: "var(--foreground)" }}>
                         <LogOut size={15} style={{ color: "var(--muted-foreground)" }} />Logout

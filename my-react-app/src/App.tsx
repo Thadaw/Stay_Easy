@@ -8,6 +8,8 @@ import TenantSetup from './pages/TenantSetup'
 import CountryPage from './pages/CountryPage'
 import HotelDetailPage from './pages/HotelDetailPage'
 import ProfilePage from './pages/ProfilePage'
+import MyBookingsPage from './pages/MyBookingsPage'
+import MyWishlistPage from './pages/MyWishlistPage'
 import ComingSoon from './pages/ComingSoon'
 import ReservePage from './pages/ReservePage'
 import RoomSelectPage from './pages/RoomSelectPage'
@@ -27,6 +29,8 @@ function App() {
         <Route path="/country/:code" element={<CountryPage />} />
         <Route path="/hotel/:id" element={<HotelDetailPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/my-bookings" element={<MyBookingsPage />} />
+        <Route path="/my-wishlist" element={<MyWishlistPage />} />
         <Route path="/notifications" element={<ComingSoon />} />
         <Route path="/account-settings" element={<ComingSoon />} />
         <Route path="/language-currency" element={<ComingSoon />} />

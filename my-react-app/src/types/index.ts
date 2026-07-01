@@ -61,3 +61,19 @@ export interface Tenant {
   id: string
   name: string
 }
+
+export interface Booking {
+  id: string
+  hotelId: number
+  hotelName: string
+  hotelCity: string
+  hotelCountry: string
+  hotelImage: string
+  checkIn: string
+  checkOut: string
+  roomTypeName: string
+  guests: number
+  totalPrice: number
+  status: 'upcoming' | 'completed' | 'cancelled'
+  createdAt: string
+}

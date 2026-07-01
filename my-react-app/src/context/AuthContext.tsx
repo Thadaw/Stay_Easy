@@ -7,7 +7,7 @@ interface AuthContextValue {
   user: User | null
   token: string | null
   loading: boolean
-  login: (token: string) => Promise<void>
+  login: (token: string, userType?: 'host' | 'guest') => Promise<void>
   credentialLogin: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
   signup: (fullName: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>
   logout: () => void
@@ -34,7 +34,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUser = async () => {
     try {
-      const { data } = await api.get<User>('/api/v1/auth/users/me')
+      const userType = localStorage.getItem('userType') || 'guest'
+      const endpoint = userType === 'host' ? '/auth/users/me' : '/auth/guests/me'
+      const { data } = await api.get<User>(endpoint)
       setUser(mapUser(data))
     } catch {
       localStorage.removeItem('token')
@@ -51,8 +53,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [token])
 
-  const login = async (newToken: string) => {
+  const login = async (newToken: string, userType?: 'host' | 'guest') => {
     localStorage.setItem('token', newToken)
+    if (userType) localStorage.setItem('userType', userType)
     setToken(newToken)
     await fetchUser()
   }
@@ -62,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const form = new FormData()
       form.append('username', email)
       form.append('password', password)
-      const res = await api.post('/api/v1/auth/users/login', form, {
+      const res = await api.post('/auth/users/login', form, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
       await login(res.data.access_token)
@@ -80,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signup = async (fullName: string, email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      await api.post('/api/v1/auth/users/register', {
+      await api.post('/auth/users/register', {
         full_name: fullName,
         email,
         password,

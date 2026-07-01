@@ -51,18 +51,14 @@ export default function Signup() {
   const handleSignup = async () => {
     setError('')
 
-    if (!isHost) {
-      setError('Coming soon')
-      return
-    }
-
     if (!fullName.trim()) { setError('Full name is required.'); return }
     if (!phone.trim()) { setError('Phone number is required.'); return }
     if (!EMAIL_RE.test(email)) { setError('Please enter a valid email address.'); return }
     if (!PASSWORD_RE.test(password)) { setError('Password must be 8+ characters with a number and a special character.'); return }
     setLoading(true)
     try {
-      await api.post('/auth/users/register', {
+      const endpoint = isHost ? '/auth/users/register' : '/auth/guests/register'
+      await api.post(endpoint, {
         full_name: fullName,
         email,
         phone,
@@ -93,7 +89,8 @@ export default function Signup() {
     setError('')
     setOtpLoading(true)
     try {
-      await api.post('/auth/users/verify-otp', { email, otp })
+      const endpoint = isHost ? '/auth/users/verify-otp' : '/auth/guests/verify-otp'
+      await api.post(endpoint, { email, otp })
       setVerified(true)
       toast.success('Account verified successfully!')
     } catch (err) {
@@ -107,7 +104,8 @@ export default function Signup() {
     setError('')
     setResendLoading(true)
     try {
-      await api.post('/auth/users/resend-otp', { email })
+      const endpoint = isHost ? '/auth/users/resend-otp' : '/auth/guests/resend-otp'
+      await api.post(endpoint, { email })
       toast.success('Verification code resent to your email')
       setResendTimer(30)
     } catch {

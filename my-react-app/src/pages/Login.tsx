@@ -14,7 +14,7 @@ export default function Login() {
   const [searchParams] = useSearchParams()
   const isHost = location.pathname.startsWith('/host') || searchParams.get('host') === 'true'
   const { login } = useAuth()
-  const redirect = searchParams.get('redirect') || (isHost ? '/become-a-host' : '/')
+  const redirect = searchParams.get('redirect') || '/'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(true)
@@ -32,47 +32,53 @@ export default function Login() {
   const handleLogin = async () => {
     setError('')
     setLoginClicked(true)
-
-    if (!isHost) {
-      setError('Coming soon')
-      setLoginClicked(false)
-      return
-    }
     setLoading(true)
-    setLoginClicked(true) 
 
     if (!email.trim()) { setError('Email is required.'); setLoginClicked(false); return }
     if (!password.trim()) { setError('Password is required.'); setLoginClicked(false); return }
     if (!EMAIL_RE.test(email)) { setError('Please enter a valid email address.'); setLoginClicked(false); return }
 
-    setLoading(true)
+    const params = new URLSearchParams()
+    params.append('grant_type', 'password')
+    params.append('username', email)
+    params.append('password', password)
+
+    let userType: 'guest' | 'host' = 'guest'
+    let res
+
     try {
-      const params = new URLSearchParams()
-      params.append('grant_type', 'password')
-      params.append('username', email)
-      params.append('password', password)
-      const res = await api.post('/auth/users/login', params, {
+      res = await api.post('/auth/guests/login', params, {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       })
-      await login(res.data.access_token)
-      localStorage.setItem('token', res.data.access_token)
-      setTimeout(() => navigate(redirect), 1700)
-    } catch (err) {
-      const isAxiosError = err instanceof AxiosError
-      const status = isAxiosError ? err.response?.status : undefined
-      const detail = isAxiosError ? err.response?.data?.detail || '' : ''
-      if (status === 404) {
-        setError('No account found with this email. Please sign up first.')
-      } else if (status === 403 || /verified|verify|activate/i.test(detail)) {
-        setError('Account not verified. Please check your email for the verification code.')
-      } else if (status === 401) {
-        setError('Invalid email or password.')
-      } else {
-        setError(detail || 'Invalid email or password.')
+      userType = 'guest'
+    } catch {
+      try {
+        res = await api.post('/auth/users/login', params, {
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        })
+        userType = 'host'
+      } catch (err) {
+        const isAxiosError = err instanceof AxiosError
+        const status = isAxiosError ? err.response?.status : undefined
+        const detail = isAxiosError ? err.response?.data?.detail || '' : ''
+        if (status === 404) {
+          setError('No account found with this email. Please sign up first.')
+        } else if (status === 403 || /verified|verify|activate/i.test(detail)) {
+          setError('Account not verified. Please check your email for the verification code.')
+        } else if (status === 401) {
+          setError('Invalid email or password.')
+        } else {
+          setError(detail || 'Invalid email or password.')
+        }
+        setLoginClicked(false)
+        setLoading(false)
+        return
       }
-      setLoginClicked(false)
-      setLoading(false)
     }
+
+    await login(res!.data.access_token, userType)
+    localStorage.setItem('token', res!.data.access_token)
+    setTimeout(() => navigate(userType === 'host' ? '/become-a-host' : redirect), 1700)
   }
 
   return (
@@ -158,9 +164,11 @@ export default function Login() {
           <div style={{ fontSize: 20, fontWeight: 700, color: '#111', marginBottom: 3 }}>
             {isHost ? 'Welcome Back, Host' : 'Welcome back!'}
           </div>
-          <div style={{ fontSize: 12, color: '#999', marginBottom: 20 }}>
+          <div style={{ fontSize: 12, color: '#999', marginBottom: 16 }}>
             {isHost ? 'Manage your properties' : 'Please enter your details'}
           </div>
+
+
 
           {/* Email */}
           <div style={{ position: 'relative', marginBottom: 13 }}>

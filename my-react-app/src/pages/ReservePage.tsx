@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom"
 import { Star, ChevronDown, Check, Circle } from "lucide-react"
 import { hotels } from "../data/hotels"
+import { useBookings } from "../context/BookingContext"
 import { Navbar } from "../components/Navbar"
 import { Footer } from "../components/Footer"
 
@@ -50,6 +51,7 @@ export default function ReservePage() {
   const parsedRooms: Record<string, number> = roomsParam ? JSON.parse(roomsParam) : {};
   const parsedGuestCounts: Record<string, number> = guestCountsParam ? JSON.parse(guestCountsParam) : {};
 
+  const { addBooking } = useBookings()
   const [checkIn, setCheckIn] = useState(searchParams.get('checkIn') || '')
   const [checkOut, setCheckOut] = useState(searchParams.get('checkOut') || '')
 
@@ -295,6 +297,22 @@ export default function ReservePage() {
             {/* Confirm button below card */}
             <button
               disabled={!selectedPayment}
+              onClick={() => {
+                const roomTypeName = selectedRoomTypes.map(r => r.name).join(', ')
+                addBooking({
+                  hotelId: hotel.id,
+                  hotelName: hotel.name,
+                  hotelCity: hotel.city,
+                  hotelCountry: hotel.country,
+                  hotelImage: hotel.images[0],
+                  checkIn,
+                  checkOut,
+                  roomTypeName,
+                  guests: totalGuests,
+                  totalPrice: total,
+                })
+                navigate('/my-bookings')
+              }}
               className="w-full mt-6 py-3.5 rounded-xl bg-[#111827] text-white font-semibold text-sm hover:bg-black transition-all disabled:bg-[#D1D5DB] disabled:cursor-not-allowed"
             >
               {selectedPayment ? "Confirm reservation" : "Select a payment method"}
