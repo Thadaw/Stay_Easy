@@ -298,50 +298,58 @@ export default function HotelDetailPage() {
                         </button>
                       </div>
                     </div>
-                    <div className="text-right shrink-0 flex flex-col justify-center">
-                      <p className="text-sm font-bold text-foreground">${effectivePrice}</p>
-                      <p className="text-xs text-muted-foreground">/ night</p>
-                    </div>
-                    <div className="shrink-0 flex flex-col items-center gap-2">
-                      <div className="flex items-center gap-2 border border-border rounded-lg px-2.5 py-1.5">
-                        <button
-                          onClick={() => handleGuestChange(rt.id, -1)}
-                          disabled={guestCount <= 1}
-                          className="w-7 h-7 rounded-full border border-border flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:border-primary transition-all"
-                        >
-                          <Minus size={10} />
-                        </button>
-                        <span className="w-6 text-center text-sm font-bold tabular-nums text-foreground">{guestCount}</span>
-                        <button
-                          onClick={() => handleGuestChange(rt.id, 1)}
-                          disabled={guestCount >= rt.maxGuests}
-                          className="w-7 h-7 rounded-full border border-border flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:border-primary transition-all"
-                        >
-                          <Plus size={10} />
-                        </button>
+                    <div className="shrink-0 flex flex-col gap-6">
+                      <div className="flex items-center justify-end gap-3">
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-foreground">${effectivePrice}</p>
+                          <p className="text-xs text-muted-foreground">/ night</p>
+                        </div>
+                        <div className="flex flex-col items-center gap-1">
+                          <div className="flex items-center gap-2 border border-border rounded-lg px-2.5 py-1.5">
+                            <button
+                              onClick={() => handleGuestChange(rt.id, -1)}
+                              disabled={guestCount <= 1}
+                              className="w-7 h-7 rounded-full border border-border flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:border-primary transition-all"
+                            >
+                              <Minus size={10} />
+                            </button>
+                            <span className="w-6 text-center text-sm font-bold tabular-nums text-foreground">{guestCount}</span>
+                            <button
+                              onClick={() => handleGuestChange(rt.id, 1)}
+                              disabled={guestCount >= rt.maxGuests}
+                              className="w-7 h-7 rounded-full border border-border flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:border-primary transition-all"
+                            >
+                              <Plus size={10} />
+                            </button>
+                          </div>
+                          <span className="text-[10px] text-muted-foreground">guests</span>
+                        </div>
                       </div>
-                      <span className="text-[10px] text-muted-foreground">guests</span>
-                      <div className="flex items-center gap-2 border border-border rounded-lg px-2.5 py-1.5">
-                        <button
-                          onClick={() => handleQtyChange(rt.id, -1)}
-                          disabled={qty <= 0}
-                          className="w-7 h-7 rounded-full border border-border flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:border-primary transition-all"
-                        >
-                          <Minus size={10} />
-                        </button>
-                        <span className="w-6 text-center text-sm font-bold tabular-nums text-foreground">{qty}</span>
-                        <button
-                          onClick={() => handleQtyChange(rt.id, 1)}
-                          disabled={qty >= rt.availableRooms}
-                          className="w-7 h-7 rounded-full border border-border flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:border-primary transition-all"
-                        >
-                          <Plus size={10} />
-                        </button>
+                      <div className="flex items-center justify-end gap-3">
+                        <div className="text-right min-w-[70px]">
+                          <p className="text-sm font-bold text-foreground">${lineTotal.toLocaleString()}</p>
+                        </div>
+                        <div className="flex flex-col items-center gap-1">
+                          <div className="flex items-center gap-2 border border-border rounded-lg px-2.5 py-1.5">
+                            <button
+                              onClick={() => handleQtyChange(rt.id, -1)}
+                              disabled={qty <= 0}
+                              className="w-7 h-7 rounded-full border border-border flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:border-primary transition-all"
+                            >
+                              <Minus size={10} />
+                            </button>
+                            <span className="w-6 text-center text-sm font-bold tabular-nums text-foreground">{qty}</span>
+                            <button
+                              onClick={() => handleQtyChange(rt.id, 1)}
+                              disabled={qty >= rt.availableRooms}
+                              className="w-7 h-7 rounded-full border border-border flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:border-primary transition-all"
+                            >
+                              <Plus size={10} />
+                            </button>
+                          </div>
+                          <span className="text-[10px] text-muted-foreground">rooms</span>
+                        </div>
                       </div>
-                      <span className="text-[10px] text-muted-foreground">rooms</span>
-                    </div>
-                    <div className="text-right shrink-0 flex flex-col justify-center min-w-[70px]">
-                      <p className="text-sm font-bold text-foreground">${lineTotal.toLocaleString()}</p>
                     </div>
                   </div>
                 );
