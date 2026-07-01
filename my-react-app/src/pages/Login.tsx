@@ -2,8 +2,11 @@ import { useState } from 'react'
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { AxiosError } from 'axios'
 import { Eye, EyeOff } from 'lucide-react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import axios from 'axios'
 import BuildingScene from '../components/BuildingScene'
 import api from '../api'
+import { useAuth } from '../context/AuthContext'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -21,6 +24,10 @@ export default function Login() {
   const location = useLocation()
   const [searchParams] = useSearchParams()
   const isHost = location.pathname.startsWith('/host') || searchParams.get('host') === 'true'
+  const { login } = useAuth()
+  const [searchParams] = useSearchParams()
+  const isHost = searchParams.get('host') === 'true'
+  const redirect = searchParams.get('redirect') || (isHost ? '/become-a-host' : '/')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(true)
@@ -30,6 +37,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
 
 
+  
   const [loginClicked, setLoginClicked] = useState(false)
 
   const fieldsReady = email.trim().length > 0 && password.trim().length > 0
@@ -43,6 +51,8 @@ export default function Login() {
       setLoginClicked(false)
       return
     }
+    setLoading(true)
+    setLoginClicked(true) 
 
     if (!email.trim()) { setError('Email is required.'); setLoginClicked(false); return }
     if (!password.trim()) { setError('Password is required.'); setLoginClicked(false); return }
@@ -61,6 +71,22 @@ export default function Login() {
       setTimeout(() => navigate('/host/tenant-setup'), 1700)
     } catch (err) {
       setError(extractError(err))
+      const res = await api.post('/auth/users/login', params)
+      await login(res.data.access_token)
+      setTimeout(() => navigate(redirect), 1700)
+    } catch (err) {
+      const isAxiosError = axios.isAxiosError(err)
+      const status = isAxiosError ? err.response?.status : undefined
+      const detail = isAxiosError ? err.response?.data?.detail || '' : ''
+      if (status === 404) {
+        setError('No account found with this email. Please sign up first.')
+      } else if (status === 403 || /verified|verify|activate/i.test(detail)) {
+        setError('Account not verified. Please check your email for the verification code.')
+      } else if (status === 401) {
+        setError('Invalid email or password.')
+      } else {
+        setError(detail || 'Invalid email or password.')
+      }
       setLoginClicked(false)
       setLoading(false)
     }
@@ -131,6 +157,7 @@ export default function Login() {
             </div>
             <div
               onClick={() => navigate(isHost ? '/host/signup' : '/signup')}
+              onClick={() => navigate(isHost ? '/signup?host=true' : redirect ? `/signup?redirect=${encodeURIComponent(redirect)}` : '/signup')}
               style={{
                 padding: '3px 0',
                 fontSize: 11,
@@ -286,6 +313,7 @@ export default function Login() {
             Don't have an account?{' '}
             <span
               onClick={() => navigate(isHost ? '/host/signup' : '/signup')}
+              onClick={() => navigate(isHost ? '/signup?host=true' : redirect ? `/signup?redirect=${encodeURIComponent(redirect)}` : '/signup')}
               style={{ color: '#111', fontWeight: 600, cursor: 'pointer' }}
             >
               Sign up

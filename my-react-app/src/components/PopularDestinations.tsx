@@ -1,5 +1,7 @@
-import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { useFavorites } from '../context/FavoritesContext'
 
 const destinations = [
   { id: 1, name: 'Mount Kailash Resort', country: 'Pokhara', image: 'https://r1imghtlak.mmtcdn.com/930f03c1-1a34-4df5-b12f-5b2aa3040903.jpg?output-format=jpg&downsize=720:*', price: 85 },
@@ -21,18 +23,9 @@ const cardVariants = {
 }
 
 function PopularDestinations() {
-  const [favorites, setFavorites] = useState<Set<number>>(new Set())
-  const toggleFav = (id: number) => {
-    setFavorites((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
-        next.add(id)
-      }
-      return next
-    })
-  }
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const { isFavorite, toggleFavorite } = useFavorites()
 
   return (
     <section className="px-10 py-12 max-w-7xl mx-auto">
@@ -50,11 +43,18 @@ function PopularDestinations() {
           <motion.div key={d.id} variants={cardVariants} className="group cursor-pointer">
             <div className="relative overflow-hidden rounded-2xl aspect-[4/5] mb-3">
               <button
-                onClick={(e) => { e.stopPropagation(); toggleFav(d.id) }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!user) {
+                    navigate('/signup');
+                  } else {
+                    toggleFavorite(d.id);
+                  }
+                }}
                 className="absolute top-2 right-2 z-10 w-7 h-7 rounded-full bg-white/80 flex items-center justify-center hover:bg-white transition-colors cursor-pointer"
                 aria-label="Toggle favorite"
               >
-                {favorites.has(d.id) ? (
+                {isFavorite(d.id) ? (
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#e34b4b" stroke="#e34b4b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
                   </svg>

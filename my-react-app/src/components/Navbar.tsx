@@ -302,7 +302,7 @@ export function Navbar() {
           <CountryCurrencyPicker />
 
           <Link
-            to="/host"
+            to="/host/login"
             className="hidden md:block px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 hover:bg-white/20 hover:scale-105 active:scale-95 whitespace-nowrap"
             style={{ color: scrolled ? "var(--foreground)" : "var(--brand-dark)" }}
           >
@@ -395,7 +395,7 @@ export function Navbar() {
                     <Link to="/login" onClick={() => setMenuOpen(false)} className="flex px-4 py-3 text-sm font-bold transition-colors hover:bg-accent" style={{ color: "var(--brand-dark)" }}>Login</Link>
                     <Link to="/signup" onClick={() => setMenuOpen(false)} className="flex px-4 py-2.5 text-sm transition-colors hover:bg-accent" style={{ color: "var(--foreground)" }}>Sign Up</Link>
                     <div className="my-1 border-t" style={{ borderColor: "var(--border)" }} />
-                    <Link to="/host" onClick={() => setMenuOpen(false)} className="flex px-4 py-2.5 text-sm transition-colors hover:bg-accent" style={{ color: "var(--foreground)" }}>Become a Host</Link>
+                    <Link to="/host/login" onClick={() => setMenuOpen(false)} className="flex px-4 py-2.5 text-sm transition-colors hover:bg-accent" style={{ color: "var(--foreground)" }}>Become a Host</Link>
                     <a href="#" className="flex px-4 py-2.5 text-sm transition-colors hover:bg-accent" style={{ color: "var(--foreground)" }}>Help Centre</a>
                     <div className="my-1 border-t" style={{ borderColor: "var(--border)" }} />
                     <Link to="/admin-login" onClick={() => setMenuOpen(false)} className="flex px-4 py-2 text-xs transition-colors hover:bg-accent" style={{ color: "var(--muted-foreground)" }}>Admin / Staff access →</Link>
