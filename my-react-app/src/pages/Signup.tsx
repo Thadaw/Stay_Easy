@@ -1,4 +1,23 @@
 import { useState, useEffect } from 'react'
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
+import { AxiosError } from 'axios'
+import { Eye, EyeOff } from 'lucide-react'
+import BuildingScene from '../components/BuildingScene'
+import api from '../api'
+import toast from 'react-hot-toast'
+
+const PASSWORD_RE = /^(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function extractError(err: unknown, fallback = 'Could not create account. Please check your details and try again.'): string {
+  if (err instanceof AxiosError && err.response?.data) {
+    const data = err.response.data as Record<string, unknown>
+    if (typeof data.detail === 'string') return data.detail
+    if (typeof data.message === 'string') return data.message
+    if (Array.isArray(data.errors) && data.errors[0]?.msg) return data.errors[0].msg
+  }
+  return fallback
+}
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import axios from 'axios'
 import BuildingScene from '../components/BuildingScene'
@@ -7,14 +26,16 @@ import toast from 'react-hot-toast'
 
 export default function Signup() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
+  const isHost = location.pathname.startsWith('/host') || searchParams.get('host') === 'true'
   const isHost = searchParams.get('host') === 'true'
 
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
-  const [showPw, setShowPw] = useState(false)
+  const [showPw, setShowPw] = useState(true)
   const [pwFocused, setPwFocused] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -36,6 +57,16 @@ export default function Signup() {
 
   const handleSignup = async () => {
     setError('')
+
+    if (!isHost) {
+      setError('Coming soon')
+      return
+    }
+
+    if (!fullName.trim()) { setError('Full name is required.'); return }
+    if (!phone.trim()) { setError('Phone number is required.'); return }
+    if (!EMAIL_RE.test(email)) { setError('Please enter a valid email address.'); return }
+    if (!PASSWORD_RE.test(password)) { setError('Password must be 8+ characters with a number and a special character.'); return }
     setLoading(true)
     try {
       await api.post('/auth/users/register', {
@@ -44,6 +75,10 @@ export default function Signup() {
         phone,
         password,
       })
+      toast.success('Verification code sent to your email')
+      setShowOtpStep(true)
+    } catch (err) {
+      setError(extractError(err))
       
       toast.success('Verification code sent to your email')
       setShowOtpStep(true)
@@ -73,6 +108,8 @@ export default function Signup() {
       await api.post('/auth/users/verify-otp', { email, otp })
       setVerified(true)
       toast.success('Account verified successfully!')
+    } catch (err) {
+      setError(extractError(err, 'Invalid verification code. Please try again.'))
     } catch {
       setError('Invalid verification code. Please try again.')
     } finally {
@@ -119,21 +156,23 @@ export default function Signup() {
       >
         {/* Form panel — on the LEFT for sign up */}
         <div
+          className="custom-scroll"
           style={{
             width: '50%',
             background: '#fff',
+            flex: 1,
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'center',
-            padding: '36px 32px',
+            padding: '22px 32px 28px',
             order: 1,
             flexShrink: 0,
+            overflowY: 'auto',
           }}
         >
           {/* Tabs */}
-          <div style={{ display: 'flex', marginBottom: 8 }}>
+          <div style={{ display: 'flex', marginBottom: 4 }}>
             <div
-              onClick={() => navigate(isHost ? '/login?host=true' : '/login')}
+              onClick={() => navigate(isHost ? '/host/login' : '/login')}
               style={{
                 padding: '3px 0',
                 fontSize: 11,
@@ -165,6 +204,10 @@ export default function Signup() {
 
           {!showOtpStep ? (
             <>
+              <div style={{ fontSize: 20, fontWeight: 700, color: '#111', marginBottom: 2 }}>
+                {isHost ? 'Become a Host' : 'Create account'}
+              </div>
+              <div style={{ fontSize: 12, color: '#999', marginBottom: 12 }}>
               <div style={{ fontSize: 20, fontWeight: 700, color: '#111', marginBottom: 3 }}>
                 {isHost ? 'Become a Host' : 'Create account'}
               </div>
@@ -173,6 +216,7 @@ export default function Signup() {
               </div>
 
               {/* Full name */}
+              <div style={{ marginBottom: 7 }}>
               <div style={{ marginBottom: 13 }}>
                 <label
                   style={{
@@ -197,6 +241,7 @@ export default function Signup() {
               </div>
 
               {/* Phone */}
+              <div style={{ position: 'relative', marginBottom: 7 }}>
               <div style={{ position: 'relative', marginBottom: 13 }}>
                 <label
                   style={{
@@ -221,6 +266,7 @@ export default function Signup() {
               </div>
 
               {/* Email */}
+              <div style={{ position: 'relative', marginBottom: 7 }}>
               <div style={{ position: 'relative', marginBottom: 13 }}>
                 <label
                   style={{
@@ -245,6 +291,7 @@ export default function Signup() {
               </div>
 
               {/* Password */}
+              <div style={{ position: 'relative', marginBottom: 7 }}>
               <div style={{ position: 'relative', marginBottom: 13 }}>
                 <label
                   style={{
@@ -276,6 +323,10 @@ export default function Signup() {
                     background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: 15, padding: 0,
                   }}
                 >
+                  {showPw ? <Eye size={15} /> : <EyeOff size={15} />}
+                </button>
+              </div>
+              <div style={{ fontSize: 11, color: '#bbb', marginTop: 0, marginBottom: 6 }}>
                   👁
                 </button>
               </div>
@@ -284,6 +335,7 @@ export default function Signup() {
               </div>
 
               {error && (
+                <p style={{ color: '#e94560', fontSize: 12, marginBottom: 6 }}>{error}</p>
                 <p style={{ color: '#e94560', fontSize: 12, marginBottom: 10 }}>{error}</p>
               )}
 
@@ -293,12 +345,17 @@ export default function Signup() {
                 style={{
                   width: '100%', padding: 11, background: '#111', border: 'none', borderRadius: 8,
                   color: '#fff', fontSize: 14, fontWeight: 600, cursor: loading ? 'default' : 'pointer',
+                  marginTop: 0, opacity: loading ? 0.7 : 1,
                   marginTop: 2, opacity: loading ? 0.7 : 1,
                 }}
               >
                 {loading ? 'Creating account...' : 'Create Account'}
               </button>
 
+              <div style={{ textAlign: 'center', marginTop: 12, fontSize: 12, color: '#aaa' }}>
+                Already have an account?{' '}
+                <span
+                  onClick={() => navigate(isHost ? '/host/login' : '/login')}
               <div style={{ textAlign: 'center', marginTop: 11, fontSize: 12, color: '#aaa' }}>
                 Already have an account?{' '}
                 <span
@@ -361,6 +418,7 @@ export default function Signup() {
                     {otpLoading ? 'Verifying...' : 'Verify OTP'}
                   </button>
 
+                  <div style={{ textAlign: 'center', marginTop: 6, fontSize: 12, color: '#aaa' }}>
                   <div style={{ textAlign: 'center', marginTop: 11, fontSize: 12, color: '#aaa' }}>
                     Didn't receive the code?{' '}
                     <span
@@ -385,6 +443,7 @@ export default function Signup() {
                   </div>
 
                   <button
+                    onClick={() => navigate(isHost ? '/host/login' : '/login')}
                     onClick={() => navigate(isHost ? '/login?host=true' : '/login')}
                     style={{
                       width: '100%', padding: 11, background: '#111', border: 'none', borderRadius: 8,

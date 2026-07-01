@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Search, ChevronDown, LogOut, LayoutDashboard, User, Settings, MapPin, Plus, Minus } from "lucide-react";
+import { Search, ChevronDown, LogOut, User, Settings, Bell, Globe, MapPin, Plus, Minus } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { CountryCurrencyPicker } from "./CountryCurrencyPicker";
 import { useAuth } from "../context/AuthContext";
@@ -12,14 +12,6 @@ interface GuestCount {
   infants: number;
 }
 
-
-const dashboardPaths: Record<string, string> = {
-  superadmin:   "/dashboard/superadmin",
-  admin:        "/dashboard/admin",
-  manager:      "/dashboard/manager",
-  receptionist: "/dashboard/receptionist",
-  guest:        "/dashboard/guest",
-};
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -74,8 +66,9 @@ export function Navbar() {
   const firstName = user && (user.firstName || user.first_name);
   const lastName = user && (user.lastName || user.last_name);
   const displayName = firstName || user?.email?.split("@")[0] || "";
+  const initials = ((firstName || '')?.[0] || '') + ((lastName || '')?.[0] || '');
+  const displayInitials = initials.toUpperCase() || user?.email?.[0]?.toUpperCase() || '?';
   const userEmail = user?.email || "";
-  const userRole = user?.role || "guest";
 
   const handleNavbarSearch = () => {
     const params = new URLSearchParams();
@@ -337,9 +330,10 @@ export function Navbar() {
             >
               {user ? (
                 <>
-                  <img src={user.avatar || ""} alt={displayName} className="w-7 h-7 rounded-full object-cover" />
-                  <span className="hidden sm:flex items-center gap-1.5 text-sm font-semibold max-w-[120px] truncate" style={{ color: "var(--brand-dark)" }}>
-                    {user.countryFlag && <span className="text-base leading-none">{user.countryFlag}</span>}
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ backgroundColor: '#2E86AB' }}>
+                    {displayInitials}
+                  </div>
+                  <span className="hidden sm:block text-sm font-semibold max-w-[120px] truncate" style={{ color: "var(--brand-dark)" }}>
                     {displayName}
                   </span>
                   <ChevronDown size={13} className={`transition-transform ${menuOpen ? "rotate-180" : ""}`} style={{ color: scrolled ? "var(--muted-foreground)" : "rgba(255,255,255,0.7)" }} />
@@ -361,7 +355,9 @@ export function Navbar() {
                   <>
                     <div className="px-4 py-4 border-b" style={{ borderColor: "var(--border)", backgroundColor: "var(--accent)" }}>
                       <div className="flex items-center gap-3">
-                        <img src={user.avatar || ""} alt={displayName} className="w-12 h-12 rounded-full object-cover border-2" style={{ borderColor: "var(--primary)" }} />
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold text-white border-2" style={{ backgroundColor: '#2E86AB', borderColor: "var(--primary)" }}>
+                          {displayInitials}
+                        </div>
                         <div className="min-w-0">
                           <p className="font-bold truncate" style={{ color: "var(--brand-dark)", fontSize: "1rem" }}>
                             {displayName}{lastName ? ` ${lastName}` : ""}
@@ -374,20 +370,23 @@ export function Navbar() {
                           )}
                         </div>
                       </div>
-                      <span className="inline-block mt-2.5 text-xs font-semibold px-2.5 py-0.5 rounded-full capitalize text-white" style={{ backgroundColor: "var(--primary)" }}>
-                        {userRole}
-                      </span>
                     </div>
                     <div className="py-1">
-                      <button onClick={() => { navigate(dashboardPaths[userRole] || "/dashboard/guest"); setMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-accent" style={{ color: "var(--foreground)" }}>
-                        <LayoutDashboard size={15} style={{ color: "var(--primary)" }} />Dashboard
+                      <button onClick={() => { navigate("/profile"); setMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-accent" style={{ color: "var(--foreground)" }}>
+                        <User size={15} style={{ color: "var(--primary)" }} />Profile
                       </button>
-                      <button onClick={() => { navigate("/dashboard/guest"); setMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-accent" style={{ color: "var(--foreground)" }}>
-                        <Settings size={15} style={{ color: "var(--muted-foreground)" }} />Profile & Bookings
+                      <button onClick={() => { navigate("/notifications"); setMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-accent" style={{ color: "var(--foreground)" }}>
+                        <Bell size={15} style={{ color: "var(--muted-foreground)" }} />Notifications
+                      </button>
+                      <button onClick={() => { navigate("/account-settings"); setMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-accent" style={{ color: "var(--foreground)" }}>
+                        <Settings size={15} style={{ color: "var(--muted-foreground)" }} />Account Settings
+                      </button>
+                      <button onClick={() => { navigate("/language-currency"); setMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-accent" style={{ color: "var(--foreground)" }}>
+                        <Globe size={15} style={{ color: "var(--muted-foreground)" }} />Language & Currency
                       </button>
                       <div className="my-1 border-t" style={{ borderColor: "var(--border)" }} />
                       <button onClick={() => { logout(); navigate("/"); setMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-accent" style={{ color: "var(--foreground)" }}>
-                        <LogOut size={15} style={{ color: "var(--muted-foreground)" }} />Sign out
+                        <LogOut size={15} style={{ color: "var(--muted-foreground)" }} />Logout
                       </button>
                     </div>
                   </>

@@ -1,24 +1,5 @@
 import { useRef, useEffect } from 'react'
 
-/**
- * BuildingScene
- * --------------
- * Canvas-based animated scene for the StayFinder auth pages.
- * Draws 4 buildings with eyes that track the mouse, a businessman
- * character with two distinct behaviour modes, and a door on the
- * orange "hotel" building that opens when the user logs in.
- *
- * mode="login"  -> character roams with phone in hand, glances at
- *                  buildings occasionally. When `fieldsReady` becomes
- *                  true he walks to the hotel door and waits. When
- *                  `loginClicked` becomes true he pockets the phone,
- *                  walks in, and the door closes behind him.
- *
- * mode="signup" -> character walks to each building in turn, pauses
- *                  to read his phone, then looks up at the building,
- *                  then moves to the next one. Loops forever.
- */
-
 type Mode = 'login' | 'signup'
 
 interface BuildingSceneProps {
@@ -233,14 +214,13 @@ export default function BuildingScene({
       }
     }
 
-    function getEyeState(): 'watch' | 'cover' | 'peek' {
-      if (!pwFocusRef.current) return 'watch'
-      return pwVisibleRef.current ? 'peek' : 'cover'
+    function getEyeState(): 'open' | 'closed' {
+      return pwVisibleRef.current ? 'open' : 'closed'
     }
 
     function updatePupils() {
       const state = getEyeState()
-      if (state === 'cover') return
+      if (state === 'closed') return
       const rect = canvas!.getBoundingClientRect()
 
 
@@ -608,24 +588,18 @@ export default function BuildingScene({
       const state = getEyeState()
       b.eyeRelX.forEach((rx, i) => {
         const ex = bw * rx, ey = eyeY, p = b.pupils[i]
-        ctx.fillStyle = 'white'
-        ctx.beginPath(); ctx.arc(ex, ey, 6, 0, Math.PI * 2); ctx.fill()
-        if (state === 'cover') {
+        if (state === 'closed') {
           ctx.fillStyle = b.color
-          ctx.fillRect(ex - 7, ey - 3, 14, 10)
-          ctx.strokeStyle = 'rgba(0,0,0,0.12)'; ctx.lineWidth = 1
-          ;[-3, 1, 5].forEach(f => {
-            ctx.beginPath(); ctx.moveTo(ex + f, ey - 2); ctx.lineTo(ex + f, ey + 6); ctx.stroke()
-          })
+          ctx.beginPath(); ctx.arc(ex, ey, 6, 0, Math.PI * 2); ctx.fill()
+          ctx.strokeStyle = '#1a1a2e'; ctx.lineWidth = 2; ctx.lineCap = 'round'
+          ctx.beginPath(); ctx.moveTo(ex - 4, ey - 1); ctx.quadraticCurveTo(ex, ey + 2, ex + 4, ey - 1); ctx.stroke()
         } else {
+          ctx.fillStyle = 'white'
+          ctx.beginPath(); ctx.arc(ex, ey, 6, 0, Math.PI * 2); ctx.fill()
           ctx.fillStyle = '#1a1a2e'
           ctx.beginPath(); ctx.arc(ex + p.ox, ey + p.oy, 3, 0, Math.PI * 2); ctx.fill()
           ctx.fillStyle = 'white'
           ctx.beginPath(); ctx.arc(ex + p.ox + 1.5, ey + p.oy - 1.5, 1, 0, Math.PI * 2); ctx.fill()
-          if (state === 'peek') {
-            ctx.fillStyle = b.color
-            ctx.fillRect(ex - 7, ey - 2, 14, 5)
-          }
         }
       })
 

@@ -56,3 +56,8 @@ export interface Testimonial {
   rating: number
   quote: string
 }
+
+export interface Tenant {
+  id: string
+  name: string
+}
