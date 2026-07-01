@@ -7,16 +7,22 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   icon?: ReactNode
   rightIcon?: ReactNode
   helperText?: string
+  floatingLabel?: boolean
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, icon, rightIcon, helperText, id, className = '', placeholder, value, ...props }, ref) => {
+  ({ label, error, icon, rightIcon, helperText, id, className = '', placeholder, value, floatingLabel = true, ...props }, ref) => {
     const [focused, setFocused] = useState(false)
     const hasValue = value !== undefined && value !== '' && value !== 0
     const inputId = id || `input-${label?.toLowerCase().replace(/\s+/g, '-')}`
 
     return (
       <div className="w-full">
+        {label && !floatingLabel && (
+          <label htmlFor={inputId} className="block text-sm font-medium text-foreground mb-1.5">
+            {label}
+          </label>
+        )}
         <div className="relative">
           {icon && (
             <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
@@ -37,14 +43,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring
               disabled:opacity-50 disabled:bg-muted disabled:cursor-not-allowed
               ${error ? 'border-destructive focus:ring-destructive/40 focus:border-destructive' : 'border-border hover:border-muted-foreground/30'}
-              ${label ? 'pt-5 pb-1.5' : ''}
+              ${label && floatingLabel ? 'pt-5 pb-1.5' : ''}
               ${icon ? 'pl-10' : ''}
               ${rightIcon ? 'pr-10' : ''}
               ${className}
             `}
             {...props}
           />
-          {label && (
+          {label && floatingLabel && (
             <label
               htmlFor={inputId}
               className={`

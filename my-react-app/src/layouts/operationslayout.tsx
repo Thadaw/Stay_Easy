@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, DoorOpen, ClipboardList, Utensils,
@@ -9,6 +9,7 @@ import type { OperatorRole } from '../types'
 import logo1 from '../assets/logos/logo1.png'
 import { Avatar } from '../components/ui/Avatar'
 import { DropdownMenu } from '../components/ui/DropdownMenu'
+import { Clock } from 'lucide-react'
 
 type NavItem = { id: string; label: string; icon: typeof LayoutDashboard; href: string; roles: OperatorRole[] }
 type NavGroup = { label: string; items: NavItem[] }
@@ -52,6 +53,13 @@ export default function OperationsLayout() {
   const location = useLocation()
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [currentTime, setCurrentTime] = useState(new Date())
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000)
+    return () => clearInterval(timer)
+  
+  }, [])
 
   const operatorStr = typeof window !== 'undefined' ? localStorage.getItem('operator') || '{}' : '{}'
   let operator: { name?: string; role?: string; email?: string }
@@ -182,6 +190,17 @@ export default function OperationsLayout() {
               placeholder="Search bookings, rooms..."
               className="w-full h-9 pl-9 pr-3 text-xs bg-muted/50 border border-border rounded-xl text-foreground placeholder:text-muted-foreground/50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring hover:border-muted-foreground/30"
             />
+          </div>
+
+          <div className= "flex-item-center gap-4 text-muted-foreground border-r border-border pr-4">
+            <Clock className="w-4 h-4"/>
+            <span className="text-sm font-mono tabular-nums">
+              {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false})}
+            </span>
+
+            <span className="text=[11px] text-muted-foreground/60 hidden md:inline ml-3">
+            {currentTime.toLocaleDateString('en-US', {weekday: 'short', month: 'short', day: 'numeric'})}
+            </span>
           </div>
 
           <button aria-label="Notifications" className="relative p-2 rounded-xl hover:bg-muted transition-colors">

@@ -17,7 +17,7 @@ export function PageHeader({ title, description, actions, breadcrumb }: PageHead
   return (
     <div className="mb-8">
       {breadcrumb && breadcrumb.length > 0 && <Breadcrumb items={breadcrumb} />}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold text-foreground tracking-tight">{title}</h1>
           {description && <p className="text-sm text-muted-foreground mt-1">{description}</p>}

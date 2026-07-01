@@ -138,3 +138,22 @@ export const mockKdsTickets: KdsTicket[] = [
     elapsed_seconds: 180, status: 'pending',
   },
 ]
+
+export interface ActivityEvent {
+  id: string
+  time: string
+  type: 'booking' | 'checkin' | 'checkout'
+  guest_name: string
+  ref: string
+  room_number?: string
+  amount?: number
+}
+
+export const mockActivityLog: ActivityEvent[] = [
+  { id: 'ACT-001', time: '09:15', type: 'booking', guest_name: 'Rajendra Poudel', ref: 'BK-005' },
+  { id: 'ACT-002', time: '10:00', type: 'checkin', guest_name: 'Sita Sharma', ref: 'BK-001', room_number: '101' },
+  { id: 'ACT-003', time: '10:30', type: 'booking', guest_name: 'Anita Gurung', ref: 'BK-006' },
+  { id: 'ACT-004', time: '11:00', type: 'checkout', guest_name: 'Binod Thapa', ref: 'BK-002', amount: 8500 },
+  { id: 'ACT-005', time: '13:45', type: 'checkin', guest_name: 'Prakash Neupane', ref: 'BK-003', room_number: '202' },
+  { id: 'ACT-006', time: '14:00', type: 'booking', guest_name: 'Kamala Devi', ref: 'BK-007' },
+]

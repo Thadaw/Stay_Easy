@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   CalendarCheck, CalendarX, Building2, BedDouble,
-  UserPlus, ClipboardCheck, ArrowRight,
+  UserPlus, ClipboardCheck, ArrowRight, Clock, Calendar,
 } from 'lucide-react'
 import { PageHeader } from '../../../components/ui/PageHeader'
 import { Table } from '../../../components/ui/Table'
@@ -10,7 +10,7 @@ import { Badge } from '../../../components/ui/Badge'
 import { Button } from '../../../components/ui/Button'
 import { SearchInput } from '../../../components/ui/SearchInput'
 import { RoomStatusGrid } from '../../../components/layoutOps/roomstatusgrid'
-import { mockBookings, mockRooms } from '../_data/mock'
+import { mockBookings, mockRooms, mockActivityLog } from '../_data/mock'
 import type { Booking } from '../../../types'
 
 const statusBadge = (status: string) => {
@@ -38,6 +38,9 @@ export default function FrontDesk() {
   const departures = useMemo(() =>
     mockBookings.filter(b => b.checkout === today && b.status === 'checked_in'), []
   )
+  const checkinsPending = useMemo(() =>
+    mockBookings.filter(b => b.status === 'confirmed').length, []
+  )
   const occupancyRate = useMemo(() => {
     const total = mockRooms.filter(r => r.status !== 'maintenance' && r.status !== 'blocked').length
     const occupied = mockRooms.filter(r => r.status === 'occupied').length
@@ -46,6 +49,17 @@ export default function FrontDesk() {
   const available = useMemo(() =>
     mockRooms.filter(r => r.status === 'available').length, []
   )
+
+  const [activityFilter, setActivityFilter] = useState<'all' | 'bookings'>('all')
+  const [activityDate, setActivityDate] = useState(today)
+
+  const filteredActivity = useMemo(() => {
+    let events = mockActivityLog
+    if (activityFilter === 'bookings') {
+      events = events.filter(e => e.type === 'booking')
+    }
+    return events
+  }, [activityFilter])
 
   const filteredBookings = useMemo(() => {
     if (!searchQuery.trim()) return mockBookings
@@ -87,11 +101,90 @@ export default function FrontDesk() {
         }
       />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-        <StatCard label="Arrivals Today" value={String(arrivals.length)} icon={CalendarCheck} color="blue" />
-        <StatCard label="Departures Today" value={String(departures.length)} icon={CalendarX} color="amber" />
-        <StatCard label="Occupancy" value={`${occupancyRate}%`} icon={Building2} color="navy" />
-        <StatCard label="Available Rooms" value={String(available)} icon={BedDouble} color="emerald" />
+      <div className="bg-white rounded-2xl border border-border shadow-sm p-5 mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <Clock className="w-5 h-5 text-primary" />
+            <h3 className="text-base font-semibold text-foreground">Today's Activity</h3>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setActivityFilter('all')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${activityFilter === 'all' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setActivityFilter('bookings')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${activityFilter === 'bookings' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
+            >
+              Bookings Only
+            </button>
+          </div>
+        </div>
+        <div className="space-y-2">
+          {filteredActivity.map(event => (
+            <div key={event.id} className="flex items-center gap-4 py-2 px-3 rounded-xl hover:bg-muted/30 transition-colors">
+              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                event.type === 'booking' ? 'bg-blue-500' :
+                event.type === 'checkin' ? 'bg-emerald-500' : 'bg-red-500'
+              }`} />
+              <span className="text-xs font-mono text-muted-foreground w-12 flex-shrink-0">{event.time}</span>
+              <span className={`text-[10px] font-semibold uppercase tracking-wider w-16 flex-shrink-0 ${
+                event.type === 'booking' ? 'text-blue-600' :
+                event.type === 'checkin' ? 'text-emerald-600' : 'text-red-600'
+              }`}>
+                {event.type === 'booking' ? 'Booking' : event.type === 'checkin' ? 'Check-in' : 'Check-out'}
+              </span>
+              <span className="text-sm font-medium text-foreground flex-1 truncate">{event.guest_name}</span>
+              <span className="text-xs text-muted-foreground font-mono">{event.ref}</span>
+              {event.room_number && <span className="text-xs text-muted-foreground">→ Room {event.room_number}</span>}
+              {event.amount && <span className="text-xs font-medium text-destructive">Rs. {event.amount.toLocaleString()}</span>}
+            </div>
+          ))}
+          {filteredActivity.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-4">No activity for this date.</p>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-8">
+        <StatCard label="Arrivals Today" value={String(arrivals.length)} icon={CalendarCheck} color="blue" trend="up" />
+        <StatCard label="Departures Today" value={String(departures.length)} icon={CalendarX} color="amber" trend="up" />
+        <StatCard label="Occupancy" value={`${occupancyRate}%`} icon={Building2} color="navy" trend={occupancyRate > 70 ? 'up' : 'down'} />
+        <StatCard label="Available" value={String(available)} icon={BedDouble} color="emerald" trend={available > 3 ? 'up' : 'down'} />
+        <StatCard label="Check-ins" value={String(checkinsPending)} icon={UserPlus} color="blue" trend="up" />
+      </div>
+
+      <div className="flex flex-wrap gap-3 mb-8">
+        <button
+          onClick={() => navigate('/ops/new-booking')}
+          className="flex items-center gap-2 px-4 py-2.5 bg-white border border-border rounded-xl text-sm font-medium text-foreground hover:bg-muted/30 hover:border-muted-foreground/30 transition-all shadow-sm"
+        >
+          <UserPlus className="w-4 h-4 text-primary" />
+          New Booking
+        </button>
+        <button
+          onClick={() => navigate('/ops/checkin')}
+          className="flex items-center gap-2 px-4 py-2.5 bg-white border border-border rounded-xl text-sm font-medium text-foreground hover:bg-muted/30 hover:border-muted-foreground/30 transition-all shadow-sm"
+        >
+          <ClipboardCheck className="w-4 h-4 text-emerald-600" />
+          Check-in
+        </button>
+        <button
+          onClick={() => navigate('/ops/checkout')}
+          className="flex items-center gap-2 px-4 py-2.5 bg-white border border-border rounded-xl text-sm font-medium text-foreground hover:bg-muted/30 hover:border-muted-foreground/30 transition-all shadow-sm"
+        >
+          <ArrowRight className="w-4 h-4 text-amber-600" />
+          Check-out
+        </button>
+        <button
+          onClick={() => navigate('/ops/frontdesk')}
+          className="flex items-center gap-2 px-4 py-2.5 bg-white border border-border rounded-xl text-sm font-medium text-foreground hover:bg-muted/30 hover:border-muted-foreground/30 transition-all shadow-sm"
+        >
+          <Building2 className="w-4 h-4 text-blue-600" />
+          Room Status
+        </button>
       </div>
 
       <div className="bg-white rounded-2xl border border-border shadow-sm mb-8">
@@ -193,24 +286,29 @@ export default function FrontDesk() {
   )
 }
 
-function StatCard({ label, value, icon: Icon, color }: {
-  label: string; value: string; icon: typeof CalendarCheck; color: string
+function StatCard({ label, value, icon: Icon, color, trend }: {
+  label: string; value: string; icon: typeof CalendarCheck; color: string; trend?: 'up' | 'down'
 }) {
   const colorMap: Record<string, string> = {
-    blue: 'bg-blue-50 text-blue-600',
-    amber: 'bg-amber-50 text-amber-600',
-    navy: 'bg-primary/10 text-primary',
-    emerald: 'bg-emerald-50 text-emerald-600',
+    blue: 'bg-blue-50 text-blue-600', amber: 'bg-amber-50 text-amber-600',
+    navy: 'bg-primary/10 text-primary', emerald: 'bg-emerald-50 text-emerald-600',
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-border shadow-sm p-5 flex items-center gap-4">
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${colorMap[color] || colorMap.blue}`}>
-        <Icon className="w-5 h-5" />
+    <div className="bg-white rounded-2xl border border-border shadow-sm p-4 flex items-center gap-3">
+      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${colorMap[color] || colorMap.blue}`}>
+        <Icon className="w-4 h-4" />
       </div>
-      <div className="min-w-0">
-        <p className="text-xs text-muted-foreground font-medium">{label}</p>
-        <p className="text-xl font-bold text-foreground mt-0.5">{value}</p>
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{label}</p>
+        <div className="flex items-center gap-1.5 mt-0.5">
+          <p className="text-lg font-bold text-foreground">{value}</p>
+          {trend && (
+            <span className={`text-[10px] font-semibold ${trend === 'up' ? 'text-emerald-600' : 'text-red-500'}`}>
+              {trend === 'up' ? '↑' : '↓'}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   )
