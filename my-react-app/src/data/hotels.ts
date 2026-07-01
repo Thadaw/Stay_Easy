@@ -1,9 +1,28 @@
+export interface RoomType {
+  id: string;
+  name: string;
+  price: number;
+  maxGuests: number;
+  bedrooms: number;
+  beds: number;
+  bathrooms: number;
+  description: string;
+  totalRooms: number;
+  availableRooms: number;
+  roomNumbers: string[];
+  bedType: string;
+  areaSqFt: number;
+  image: string;
+}
+
 export interface Hotel {
   id: number;
   name: string;
   location: string;
   city: string;
   country: string;
+  lat: number;
+  lng: number;
   rating: number;
   reviews: number;
   price: number;
@@ -22,6 +41,7 @@ export interface Hotel {
   beds: number;
   bathrooms: number;
   maxGuests: number;
+  roomTypes: RoomType[];
 }
 
 export const hotels: Hotel[] = [
@@ -31,6 +51,8 @@ export const hotels: Hotel[] = [
     location: "Maldives, South Malé Atoll",
     city: "South Malé Atoll",
     country: "Maldives",
+    lat: 3.8,
+    lng: 73.5,
     rating: 4.97,
     reviews: 312,
     price: 420,
@@ -55,6 +77,11 @@ export const hotels: Hotel[] = [
     beds: 2,
     bathrooms: 2,
     maxGuests: 4,
+    roomTypes: [
+      { id: "std", name: "Standard Villa", price: 420, maxGuests: 2, bedrooms: 1, beds: 1, bathrooms: 1, description: "Overwater villa with lagoon views", totalRooms: 5, availableRooms: 3, roomNumbers: ["101", "102", "103"], bedType: "King", areaSqFt: 480, image: "https://images.unsplash.com/photo-1605538108568-7f0d77a214c1?w=600&h=450&fit=crop&auto=format" },
+      { id: "dlx", name: "Deluxe Villa", price: 620, maxGuests: 4, bedrooms: 2, beds: 2, bathrooms: 2, description: "Premium overwater villa with private pool", totalRooms: 3, availableRooms: 2, roomNumbers: ["201", "202"], bedType: "King + Twin", areaSqFt: 720, image: "https://images.unsplash.com/photo-1578898886225-c7c894047899?w=600&h=450&fit=crop&auto=format" },
+      { id: "prem", name: "Premier Suite", price: 890, maxGuests: 4, bedrooms: 2, beds: 2, bathrooms: 2, description: "Top-floor suite with panoramic ocean views", totalRooms: 2, availableRooms: 0, roomNumbers: [], bedType: "Emperor", areaSqFt: 1100, image: "https://images.unsplash.com/photo-1543489822-c49534f3271f?w=600&h=450&fit=crop&auto=format" },
+    ],
   },
   {
     id: 2,
@@ -62,6 +89,8 @@ export const hotels: Hotel[] = [
     location: "Zermatt, Switzerland",
     city: "Zermatt",
     country: "Switzerland",
+    lat: 46.02,
+    lng: 7.75,
     rating: 4.89,
     reviews: 204,
     price: 580,
@@ -85,6 +114,11 @@ export const hotels: Hotel[] = [
     beds: 6,
     bathrooms: 3,
     maxGuests: 8,
+    roomTypes: [
+      { id: "std", name: "Standard Chalet", price: 580, maxGuests: 4, bedrooms: 2, beds: 3, bathrooms: 2, description: "Cosy mountain-view room", totalRooms: 8, availableRooms: 5, roomNumbers: ["101", "102", "103", "104", "105"], bedType: "Queen + Single", areaSqFt: 550, image: "https://images.unsplash.com/photo-1605346434674-a440ca4dc4c0?w=600&h=450&fit=crop&auto=format" },
+      { id: "dlx", name: "Deluxe Chalet", price: 780, maxGuests: 6, bedrooms: 3, beds: 4, bathrooms: 2, description: "Spacious suite with hot tub access", totalRooms: 4, availableRooms: 2, roomNumbers: ["201", "202"], bedType: "King + 2 Single", areaSqFt: 850, image: "https://images.unsplash.com/photo-1578898886225-c7c894047899?w=600&h=450&fit=crop&auto=format" },
+      { id: "prem", name: "Grand Suite", price: 1200, maxGuests: 8, bedrooms: 4, beds: 6, bathrooms: 3, description: "Entire top floor with private sauna", totalRooms: 2, availableRooms: 1, roomNumbers: ["301"], bedType: "Emperor + Queen", areaSqFt: 1500, image: "https://images.unsplash.com/photo-1731336478850-6bce7235e320?w=600&h=450&fit=crop&auto=format" },
+    ],
   },
   {
     id: 3,
@@ -92,6 +126,8 @@ export const hotels: Hotel[] = [
     location: "Oia, Santorini, Greece",
     city: "Oia",
     country: "Greece",
+    lat: 36.46,
+    lng: 25.38,
     rating: 4.95,
     reviews: 178,
     price: 340,
@@ -115,6 +151,11 @@ export const hotels: Hotel[] = [
     beds: 1,
     bathrooms: 1,
     maxGuests: 2,
+    roomTypes: [
+      { id: "std", name: "Cliffside Room", price: 340, maxGuests: 2, bedrooms: 1, beds: 1, bathrooms: 1, description: "Cozy room with caldera view", totalRooms: 6, availableRooms: 4, roomNumbers: ["C1", "C2", "C3", "C4"], bedType: "Queen", areaSqFt: 320, image: "https://images.unsplash.com/photo-1549294413-26f195200c16?w=600&h=450&fit=crop&auto=format" },
+      { id: "dlx", name: "Suite with Plunge Pool", price: 520, maxGuests: 2, bedrooms: 1, beds: 1, bathrooms: 1, description: "Spacious suite with private plunge pool", totalRooms: 3, availableRooms: 1, roomNumbers: ["P1"], bedType: "King", areaSqFt: 480, image: "https://images.unsplash.com/photo-1629140727571-9b5c6f6267b4?w=600&h=450&fit=crop&auto=format" },
+      { id: "prem", name: "Honeymoon Penthouse", price: 750, maxGuests: 2, bedrooms: 1, beds: 1, bathrooms: 1, description: "Penthouse with panoramic terrace", totalRooms: 1, availableRooms: 1, roomNumbers: ["H1"], bedType: "Emperor", areaSqFt: 650, image: "https://images.unsplash.com/photo-1605538108568-7f0d77a214c1?w=600&h=450&fit=crop&auto=format" },
+    ],
   },
   {
     id: 4,
@@ -122,6 +163,8 @@ export const hotels: Hotel[] = [
     location: "Ubud, Bali, Indonesia",
     city: "Ubud",
     country: "Indonesia",
+    lat: -8.52,
+    lng: 115.27,
     rating: 4.93,
     reviews: 451,
     price: 195,
@@ -145,6 +188,11 @@ export const hotels: Hotel[] = [
     beds: 4,
     bathrooms: 3,
     maxGuests: 6,
+    roomTypes: [
+      { id: "std", name: "Jungle Room", price: 195, maxGuests: 2, bedrooms: 1, beds: 1, bathrooms: 1, description: "Garden-view room with outdoor shower", totalRooms: 5, availableRooms: 3, roomNumbers: ["101", "102", "105"], bedType: "Queen", areaSqFt: 380, image: "https://images.unsplash.com/photo-1549294413-26f195200c16?w=600&h=450&fit=crop&auto=format" },
+      { id: "dlx", name: "Pool Villa", price: 350, maxGuests: 4, bedrooms: 2, beds: 2, bathrooms: 2, description: "Villa with private infinity pool", totalRooms: 3, availableRooms: 2, roomNumbers: ["201", "203"], bedType: "King + Single", areaSqFt: 680, image: "https://images.unsplash.com/photo-1613977257365-aaae5a9817ff?w=600&h=450&fit=crop&auto=format" },
+      { id: "prem", name: "Royal Villa", price: 550, maxGuests: 6, bedrooms: 3, beds: 4, bathrooms: 3, description: "Master villa with butler service", totalRooms: 2, availableRooms: 1, roomNumbers: ["301"], bedType: "Emperor + Queen", areaSqFt: 1050, image: "https://images.unsplash.com/photo-1578898886225-c7c894047899?w=600&h=450&fit=crop&auto=format" },
+    ],
   },
   {
     id: 5,
@@ -152,6 +200,8 @@ export const hotels: Hotel[] = [
     location: "Minato, Tokyo, Japan",
     city: "Tokyo",
     country: "Japan",
+    lat: 35.66,
+    lng: 139.75,
     rating: 4.88,
     reviews: 267,
     price: 475,
@@ -174,6 +224,10 @@ export const hotels: Hotel[] = [
     beds: 2,
     bathrooms: 2,
     maxGuests: 4,
+    roomTypes: [
+      { id: "std", name: "City Room", price: 475, maxGuests: 2, bedrooms: 1, beds: 1, bathrooms: 1, description: "Elegant room with Tokyo Tower view", totalRooms: 6, availableRooms: 4, roomNumbers: ["38A", "38B", "38C", "38D"], bedType: "Queen", areaSqFt: 420, image: "https://images.unsplash.com/photo-1590675560125-0d832b9d719e?w=600&h=450&fit=crop&auto=format" },
+      { id: "dlx", name: "Penthouse Suite", price: 720, maxGuests: 4, bedrooms: 2, beds: 2, bathrooms: 2, description: "Corner suite with wraparound views", totalRooms: 2, availableRooms: 1, roomNumbers: ["39A"], bedType: "King", areaSqFt: 720, image: "https://images.unsplash.com/photo-1731336478850-6bce7235e320?w=600&h=450&fit=crop&auto=format" },
+    ],
   },
   {
     id: 6,
@@ -181,6 +235,8 @@ export const hotels: Hotel[] = [
     location: "Positano, Italy",
     city: "Positano",
     country: "Italy",
+    lat: 40.63,
+    lng: 14.49,
     rating: 4.91,
     reviews: 389,
     price: 290,
@@ -204,6 +260,11 @@ export const hotels: Hotel[] = [
     beds: 4,
     bathrooms: 2,
     maxGuests: 6,
+    roomTypes: [
+      { id: "std", name: "Sea-View Room", price: 290, maxGuests: 2, bedrooms: 1, beds: 1, bathrooms: 1, description: "Bright room with sea views", totalRooms: 5, availableRooms: 3, roomNumbers: ["101", "102", "104"], bedType: "Queen", areaSqFt: 350, image: "https://images.unsplash.com/photo-1549294413-26f195200c16?w=600&h=450&fit=crop&auto=format" },
+      { id: "dlx", name: "Terrace Suite", price: 450, maxGuests: 4, bedrooms: 2, beds: 2, bathrooms: 1, description: "Suite with private al-fresco terrace", totalRooms: 3, availableRooms: 2, roomNumbers: ["201", "202"], bedType: "King", areaSqFt: 520, image: "https://images.unsplash.com/photo-1613977257365-aaae5a9817ff?w=600&h=450&fit=crop&auto=format" },
+      { id: "prem", name: "Amalfi Penthouse", price: 680, maxGuests: 6, bedrooms: 3, beds: 4, bathrooms: 2, description: "Penthouse with panoramic coastline views", totalRooms: 2, availableRooms: 0, roomNumbers: [], bedType: "Emperor", areaSqFt: 900, image: "https://images.unsplash.com/photo-1605538108568-7f0d77a214c1?w=600&h=450&fit=crop&auto=format" },
+    ],
   },
   {
     id: 7,
@@ -211,6 +272,8 @@ export const hotels: Hotel[] = [
     location: "Siena, Tuscany, Italy",
     city: "Siena",
     country: "Italy",
+    lat: 43.32,
+    lng: 11.33,
     rating: 4.96,
     reviews: 143,
     price: 350,
@@ -234,6 +297,11 @@ export const hotels: Hotel[] = [
     beds: 7,
     bathrooms: 4,
     maxGuests: 10,
+    roomTypes: [
+      { id: "std", name: "Countryside Room", price: 350, maxGuests: 2, bedrooms: 1, beds: 1, bathrooms: 1, description: "Charming room with vineyard views", totalRooms: 4, availableRooms: 3, roomNumbers: ["C1", "C2", "C4"], bedType: "Queen", areaSqFt: 400, image: "https://images.unsplash.com/photo-1543489822-c49534f3271f?w=600&h=450&fit=crop&auto=format" },
+      { id: "dlx", name: "Estate Suite", price: 550, maxGuests: 6, bedrooms: 3, beds: 4, bathrooms: 2, description: "Suite with olive grove access", totalRooms: 3, availableRooms: 2, roomNumbers: ["E1", "E2"], bedType: "King", areaSqFt: 680, image: "https://images.unsplash.com/photo-1549294413-26f195200c16?w=600&h=450&fit=crop&auto=format" },
+      { id: "prem", name: "Villa Magnifica", price: 900, maxGuests: 10, bedrooms: 5, beds: 7, bathrooms: 4, description: "Entire farmhouse with private pool", totalRooms: 1, availableRooms: 1, roomNumbers: ["V1"], bedType: "Emperor", areaSqFt: 1800, image: "https://images.unsplash.com/photo-1605346434674-a440ca4dc4c0?w=600&h=450&fit=crop&auto=format" },
+    ],
   },
   {
     id: 8,
@@ -241,6 +309,8 @@ export const hotels: Hotel[] = [
     location: "7th Arrondissement, Paris",
     city: "Paris",
     country: "France",
+    lat: 48.86,
+    lng: 2.32,
     rating: 4.85,
     reviews: 521,
     price: 220,
@@ -263,6 +333,10 @@ export const hotels: Hotel[] = [
     beds: 3,
     bathrooms: 1,
     maxGuests: 4,
+    roomTypes: [
+      { id: "std", name: "Classic Room", price: 220, maxGuests: 2, bedrooms: 1, beds: 1, bathrooms: 1, description: "Elegant Parisian room with city views", totalRooms: 4, availableRooms: 2, roomNumbers: ["3A", "3B"], bedType: "Queen", areaSqFt: 320, image: "https://images.unsplash.com/photo-1629140727571-9b5c6f6267b4?w=600&h=450&fit=crop&auto=format" },
+      { id: "dlx", name: "Family Suite", price: 380, maxGuests: 4, bedrooms: 2, beds: 3, bathrooms: 1, description: "Spacious suite with separate living area", totalRooms: 2, availableRooms: 1, roomNumbers: ["5A"], bedType: "King", areaSqFt: 580, image: "https://images.unsplash.com/photo-1578898886225-c7c894047899?w=600&h=450&fit=crop&auto=format" },
+    ],
   },
 ];
 
